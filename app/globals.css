@@ -1,26 +1,116 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
+/* ─────────────────────────────────────────────────────────────
+   Design tokens — SINGLE GLOBAL SOURCE (transcribed from DESIGN.md)
+   Components reference these token names, never raw hex/px.
+   ───────────────────────────────────────────────────────────── */
 :root {
+  --radius: 0.75rem;
+
+  /* shadcn semantic surface mapped onto the Wise-inspired palette */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0e0f0c;          /* ink */
+  --card: #ffffff;
+  --card-foreground: #0e0f0c;
+  --popover: #ffffff;
+  --popover-foreground: #0e0f0c;
+  --primary: #175CFF;             /* blue brand */
+  --primary-foreground: #ffffff;  /* on-primary — white text on blue */
+  --secondary: #e7ebf2;           /* cool canvas-soft */
+  --secondary-foreground: #0e0f0c;
+  --muted: #f1f4f9;
+  --muted-foreground: #6b6e72;
+  --accent: #e4edff;              /* primary-pale (blue) */
+  --accent-foreground: #0a2a66;   /* ink-deep (blue) */
+  --destructive: #d03238;         /* negative */
+  --destructive-foreground: #ffffff;
+  --border: #e4e8f0;
+  --input: #e2e7f0;
+  --ring: #175cff;
+
+  /* brand extras (used directly by product surfaces) */
+  --ink: #0e0f0c;
+  --ink-deep: #0a2a66;            /* deep brand blue (on pale surfaces) */
+  --body: #454745;
+  --mute: #868685;
+  --sage: #e7ebf2;
+  --primary-pale: #e4edff;        /* light blue tint */
+  --primary-active: #0f4fe6;      /* primary hover — deeper blue */
+  --brand-green: #175cff;         /* brand link colour on white (blue now) */
+  --positive: #2ead4b;            /* success stays green */
+  --positive-deep: #054d28;
+  --positive-pale: #dcf3e4;       /* light green — success badges */
+  --warning: #ffd11a;
+  --warning-deep: #b86700;
+  --negative: #d03238;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-ink-deep: var(--ink-deep);
+  --color-body: var(--body);
+  --color-mute: var(--mute);
+  --color-sage: var(--sage);
+  --color-primary-pale: var(--primary-pale);
+  --color-primary-active: var(--primary-active);
+  --color-brand-green: var(--brand-green);
+  --color-positive: var(--positive);
+  --color-positive-deep: var(--positive-deep);
+  --color-positive-pale: var(--positive-pale);
+  --color-warning: var(--warning);
+  --color-warning-deep: var(--warning-deep);
+  --color-negative: var(--negative);
+
+  /* radius scale from DESIGN.md */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* typography faces (Wise Sans -> Manrope display substitute, Inter body) */
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-manrope), "Manrope", system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Voice-recording waveform — bars scale on the vertical axis, staggered. */
+@keyframes soundbar {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
