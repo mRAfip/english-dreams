@@ -319,14 +319,14 @@ function PlaylistRow({
               alt=""
               className="absolute inset-0 size-full object-cover"
             />
-            <span className="absolute inset-0 grid place-items-center bg-ink/25 text-primary-foreground">
+            <span className="absolute inset-0 grid place-items-center bg-black/35 text-primary-foreground">
               <PlayCircle className="size-6" />
             </span>
           </>
         ) : (
           <PlayCircle className="size-6" />
         )}
-        <span className="absolute left-1 top-1 rounded bg-ink/70 px-1 text-[10px] font-bold text-primary-foreground">
+        <span className="absolute left-1 top-1 rounded bg-black/75 px-1 text-[10px] font-bold text-primary-foreground">
           {index + 1}
         </span>
       </span>

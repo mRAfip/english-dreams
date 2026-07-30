@@ -70,28 +70,27 @@ export function LearningPathTimeline({ journey }: { journey: StudentJourney }) {
   return (
     <div>
       {/* Header */}
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
+      <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
             Learning path
           </h1>
-          <p className="text-sm text-body">
-            {journey.totalWeeks} weeks · {totalDays} teaching days ·{" "}
-            {journey.totalWeeks * 2} weekend papers
+          <p className="text-xs sm:text-sm text-body">
+            {journey.totalWeeks} weeks · {totalDays} teaching days · {journey.totalWeeks * 2} papers
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="font-display text-2xl font-extrabold text-ink">
+        <div className="hidden sm:flex items-center justify-between gap-4 w-full sm:w-auto mt-1 sm:mt-0">
+          <div className="text-left sm:text-right">
+            <div className="font-display text-2xl font-extrabold text-ink leading-none">
               {percent}%
             </div>
-            <div className="text-xs text-mute">
-              {journey.daysCompleted} / {totalDays} days completed
+            <div className="mt-1 text-xs text-mute">
+              {journey.daysCompleted} / {totalDays} completed
             </div>
           </div>
-          <Button onClick={() => setSelected(journey.currentWeek)}>
-            <CircleDot />
+          <Button onClick={() => setSelected(journey.currentWeek)} size="sm" className="h-9 sm:h-11">
+            <CircleDot className="size-4" />
             Today
           </Button>
         </div>

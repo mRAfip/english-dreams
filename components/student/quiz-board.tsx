@@ -44,6 +44,35 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
   const [selected, setSelected] = React.useState(journey.currentWeek);
 
   const quizzes = allQuizzes(journey);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const startQuizId = params.get("start");
+      const startWeek = params.get("week");
+      const startDay = params.get("day");
+
+      if (startWeek) {
+        setSelected(parseInt(startWeek, 10));
+      }
+
+      if (startQuizId) {
+        const found = quizzes.find((q) => q.id === startQuizId);
+        if (found && found.state !== "locked") {
+          setActive(found);
+        }
+      } else if (startWeek && startDay) {
+        const found = quizzes.find(
+          (q) =>
+            q.weekNumber === parseInt(startWeek, 10) &&
+            q.day === startDay
+        );
+        if (found && found.state !== "locked") {
+          setActive(found);
+        }
+      }
+    }
+  }, [quizzes]);
   const done = quizzes.filter((q) => q.state === "done");
   const open = quizzes.filter((q) => q.state === "open");
   const missed = quizzes.filter((q) => q.state === "missed");
@@ -93,7 +122,7 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
       {/* Numbers across every week */}
       <section
         aria-label="Your assessment record"
-        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="mt-6 hidden sm:grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
         <StatTile
           label="Open now"

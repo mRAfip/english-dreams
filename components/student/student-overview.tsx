@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import {
   BookOpenCheck,
@@ -5,7 +8,8 @@ import {
   Flame,
   ListChecks,
   Lock,
-  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,8 +30,6 @@ import {
 // standing, and what do I do today. Designed for a phone; it simply centers into
 // a comfortable column on larger screens.
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-
 function greetingFor(hour: number): string {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
@@ -41,8 +43,13 @@ export function StudentOverview({
   name: string;
   journey: StudentJourney;
 }) {
-  const day = today(journey);
-  const week = journey.weeks[journey.currentWeek - 1];
+  const todayDay = today(journey);
+  const [activeWeekNum, setActiveWeekNum] = useState(journey.currentWeek);
+  const [selectedDayNumber, setSelectedDayNumber] = useState<number | null>(
+    todayDay ? todayDay.dayNumber : null
+  );
+
+  const activeWeek = journey.weeks[activeWeekNum - 1];
   const waiting = awaitingReview(journey);
   const redo = needsRedo(journey);
   const openPapers = openQuizzes(journey);
@@ -51,6 +58,10 @@ export function StudentOverview({
       ? 0
       : Math.round((journey.daysCompleted / journey.totalDays) * 100);
   const greeting = greetingFor(new Date().getHours());
+
+  const selectedDay = selectedDayNumber
+    ? journey.weeks.flatMap((w) => w.days).find((d) => d.dayNumber === selectedDayNumber)
+    : null;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -61,21 +72,61 @@ export function StudentOverview({
             {greeting}, {name}
           </h1>
           <p className="truncate text-sm text-body">
-            Week {journey.currentWeek} of {journey.totalWeeks}
-            {week ? ` · ${week.title}` : ""}
+            Week {activeWeekNum} of {journey.totalWeeks}{activeWeek ? ` · ${activeWeek.title}` : ""}
           </p>
         </div>
-        <Link
-          href="/inbox"
-          aria-label="Messages"
-          className="grid size-11 shrink-0 place-items-center rounded-full border border-border bg-card text-ink transition-colors hover:bg-muted"
-        >
-          <MessageSquare className="size-5" />
-        </Link>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={activeWeekNum === 1}
+            onClick={() => {
+              const nextWeek = activeWeekNum - 1;
+              setActiveWeekNum(nextWeek);
+              const wk = journey.weeks[nextWeek - 1];
+              if (wk && wk.days.length > 0) {
+                const firstUnlocked = wk.days.find(d => d.state !== "locked") ?? wk.days[0];
+                setSelectedDayNumber(firstUnlocked.dayNumber);
+              } else {
+                setSelectedDayNumber(null);
+              }
+            }}
+            className="size-9 rounded-full bg-card hover:bg-muted text-ink border border-border"
+            title="Previous week"
+          >
+            <ChevronLeft className="size-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={activeWeekNum === journey.totalWeeks}
+            onClick={() => {
+              const nextWeek = activeWeekNum + 1;
+              setActiveWeekNum(nextWeek);
+              const wk = journey.weeks[nextWeek - 1];
+              if (wk && wk.days.length > 0) {
+                const firstUnlocked = wk.days.find(d => d.state !== "locked") ?? wk.days[0];
+                setSelectedDayNumber(firstUnlocked.dayNumber);
+              } else {
+                setSelectedDayNumber(null);
+              }
+            }}
+            className="size-9 rounded-full bg-card hover:bg-muted text-ink border border-border"
+            title="Next week"
+          >
+            <ChevronRight className="size-5" />
+          </Button>
+        </div>
       </header>
 
       {/* Weekly day strip */}
-      {week ? <WeekStrip week={week} /> : null}
+      {activeWeek ? (
+        <WeekStrip
+          week={activeWeek}
+          selectedDayNumber={selectedDayNumber}
+          onSelectDay={setSelectedDayNumber}
+        />
+      ) : null}
 
       {/* Progress + task-review hero */}
       <ProgressHero
@@ -95,7 +146,13 @@ export function StudentOverview({
             id="today-heading"
             className="font-display text-lg font-extrabold text-ink"
           >
-            {day ? "Today's class" : "This week"}
+            {selectedDay
+              ? selectedDay.dayNumber === todayDay?.dayNumber
+                ? "Today's class"
+                : `Class for Day ${selectedDay.dayNumber}`
+              : todayDay
+                ? "Today's class"
+                : "This week"}
           </h2>
           <Link
             href="/student/learning-path"
@@ -105,8 +162,10 @@ export function StudentOverview({
           </Link>
         </div>
 
-        {day ? (
-          <DayModuleCard day={day} />
+        {selectedDay ? (
+          <DayModuleCard day={selectedDay} />
+        ) : todayDay ? (
+          <DayModuleCard day={todayDay} />
         ) : openPapers.length > 0 ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
             <p className="text-sm text-body">
@@ -133,105 +192,145 @@ export function StudentOverview({
  * The week at a glance: five teaching days (Mon–Fri) plus the two weekend
  * assessment papers (Sat, Sun). Seven columns, always fitting the width.
  */
-function WeekStrip({ week }: { week: StudentWeek }) {
+function WeekStrip({
+  week,
+  selectedDayNumber,
+  onSelectDay,
+}: {
+  week: StudentWeek;
+  selectedDayNumber: number | null;
+  onSelectDay: (num: number) => void;
+}) {
   const sat = week.quizzes.find((q) => q.day === "saturday");
   const sun = week.quizzes.find((q) => q.day === "sunday");
 
   return (
-    <div className="grid grid-cols-7 gap-1">
+    <div className="flex items-center justify-between gap-1.5 w-full bg-secondary/10 p-1.5 rounded-fullborder border-white/5">
       {week.days.map((d) => (
-        <DayPill key={d.dayNumber} label={WEEKDAYS[d.weekday - 1] ?? ""} day={d} />
+        <DayPill
+          key={d.dayNumber}
+          day={d}
+          selected={d.dayNumber === selectedDayNumber}
+          onSelect={() => onSelectDay(d.dayNumber)}
+        />
       ))}
-      <QuizPill label="Sat" quiz={sat} />
-      <QuizPill label="Sun" quiz={sun} />
+      <QuizPill quiz={sat} />
+      <QuizPill quiz={sun} />
     </div>
   );
 }
 
 function PillFrame({
-  label,
   href,
   current,
+  onClick,
   children,
 }: {
-  label: string;
   href: string | null;
   current?: boolean;
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
-  const className = "flex flex-col items-center gap-1.5";
-  const inner = (
-    <>
-      <span className="text-[10px] font-medium text-mute">{label}</span>
-      {children}
-    </>
-  );
+  const className = "flex flex-col items-center cursor-pointer";
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-current={current ? "page" : undefined}
+        className={className}
+      >
+        {children}
+      </button>
+    );
+  }
   return href ? (
     <Link
       href={href}
       aria-current={current ? "page" : undefined}
       className={className}
     >
-      {inner}
+      {children}
     </Link>
   ) : (
     <div className={className} aria-disabled>
-      {inner}
+      {children}
     </div>
   );
 }
 
-function DayPill({ label, day }: { label: string; day: StudentDay }) {
+function DayPill({
+  day,
+  selected,
+  onSelect,
+}: {
+  day: StudentDay;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const locked = day.state === "locked";
-  const circle =
-    day.state === "today"
-      ? "bg-primary text-primary-foreground shadow-sm"
-      : day.state === "done"
-        ? "bg-primary-pale text-ink-deep"
-        : "bg-secondary text-mute";
+
+  if (selected) {
+    return (
+      <PillFrame href={null} onClick={locked ? undefined : onSelect}>
+        <span className="flex items-center justify-center h-9 sm:h-10 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-extrabold whitespace-nowrap bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.4)] border border-orange-400/30 transition-all scale-102">
+          Day {day.dayNumber}
+        </span>
+      </PillFrame>
+    );
+  }
+
+  const circle = day.state === "today"
+    ? "bg-primary-pale text-primary border border-primary/20"
+    : day.state === "done"
+      ? "bg-[#181a25]/60 text-ink/80 border border-white/5"
+      : "bg-secondary/40 text-mute border border-white/5";
 
   return (
-    <PillFrame
-      label={label}
-      href={locked ? null : `/student/learning-path/${day.dayNumber}`}
-      current={day.state === "today"}
-    >
+    <PillFrame href={null} onClick={locked ? undefined : onSelect}>
       <span
         className={cn(
-          "grid size-9 place-items-center rounded-full text-sm font-bold transition-colors sm:size-10",
+          "grid size-9 sm:size-10 place-items-center rounded-full text-xs sm:text-sm font-bold transition-all",
           circle,
         )}
       >
-        {locked ? <Lock className="size-4" /> : day.dayNumber}
+        {locked ? <Lock className="size-3.5" /> : day.dayNumber}
       </span>
     </PillFrame>
   );
 }
 
-function QuizPill({ label, quiz }: { label: string; quiz: StudentQuiz | undefined }) {
+function QuizPill({ quiz }: { quiz: StudentQuiz | undefined }) {
   const state = quiz?.state ?? "locked";
-  const circle =
-    state === "done"
-      ? "bg-positive-pale text-positive-deep"
-      : state === "open"
-        ? "bg-primary text-primary-foreground shadow-sm"
-        : state === "missed"
-          ? "bg-destructive/10 text-destructive"
-          : "bg-secondary text-mute";
+  const circle = state === "done"
+    ? "bg-positive-pale text-positive-deep border border-positive/10"
+    : state === "open"
+      ? "bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold shadow-[0_0_15px_rgba(249,115,22,0.55)]"
+      : state === "missed"
+        ? "bg-destructive/10 text-destructive border border-destructive/20"
+        : "bg-secondary/40 text-mute border border-white/5";
 
   return (
-    <PillFrame label={label} href={quiz ? "/student/quizzes" : null}>
+    <PillFrame
+      href={
+        quiz && state !== "locked"
+          ? `/student/quizzes?start=${quiz.id}&week=${quiz.weekNumber}&day=${quiz.day}`
+          : quiz
+            ? "/student/quizzes"
+            : null
+      }
+      current={state === "open"}
+    >
       <span
         className={cn(
-          "grid size-9 place-items-center rounded-full transition-colors sm:size-10",
+          "grid size-9 place-items-center rounded-full transition-all sm:size-10",
           circle,
         )}
-        title={quiz ? "Weekend paper" : undefined}
       >
         {state === "locked" ? (
           <Lock className="size-4" />
         ) : (
-          <ListChecks className="size-4" />
+          <ListChecks className="size-4.5 text-emerald-400" />
         )}
       </span>
     </PillFrame>

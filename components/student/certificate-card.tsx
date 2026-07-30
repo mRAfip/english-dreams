@@ -223,7 +223,7 @@ function CertificateCard({
         <span
           className={cn(
             "flex size-14 items-center justify-center rounded-full",
-            unlocked ? "bg-ink text-primary" : "bg-card text-mute",
+            unlocked ? "bg-white text-primary" : "bg-card text-mute",
           )}
         >
           <Award className="size-7" />

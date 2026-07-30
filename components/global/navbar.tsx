@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronRight, LifeBuoy, Menu, Search } from "lucide-react";
 import { UserMenu } from "@/components/global/user-menu";
+import { NotificationBell } from "@/components/global/notification-bell";
 import { ROLE_HOME, ROLE_LABEL } from "@/lib/auth/roles";
 import type { CurrentUser } from "@/lib/auth/guards";
 
@@ -61,14 +62,7 @@ export function Navbar({
 
       <div className="flex shrink-0 items-center gap-2">
         <SearchTrigger />
-        <Link
-          href="/support"
-          title="Support"
-          className="grid size-9 place-items-center rounded-lg text-mute transition-colors hover:bg-muted hover:text-ink"
-        >
-          <LifeBuoy className="size-4.5" />
-          <span className="sr-only">Support</span>
-        </Link>
+        <NotificationBell user={user} />
         <UserMenu user={user} />
       </div>
     </header>

@@ -161,7 +161,7 @@ export function MessageComposer({
                 type="button"
                 onClick={() => setFile(null)}
                 aria-label="Remove attachment"
-                className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-ink text-primary-foreground shadow-sm transition-colors hover:bg-ink/90"
+                className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-neutral-800 text-white shadow-sm transition-colors hover:bg-neutral-700"
               >
                 <X className="size-3" />
               </button>

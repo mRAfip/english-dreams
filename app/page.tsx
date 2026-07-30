@@ -98,11 +98,11 @@ export default function Home() {
 
       {/* CTA band */}
       <section className="mx-auto w-full max-w-6xl px-6 py-20">
-        <div className="rounded-xl bg-ink px-8 py-14 text-center">
+        <div className="rounded-2xl bg-gradient-to-br from-neutral-900/85 to-neutral-950/85 backdrop-blur-lg border border-white/10 px-8 py-14 text-center shadow-2xl">
           <h2 className="mx-auto max-w-2xl font-display text-3xl font-extrabold tracking-tight text-primary sm:text-4xl">
             Your 60-day journey starts today.
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-base text-sage">
+          <p className="mx-auto mt-4 max-w-lg text-base text-body">
             Join English Dreams and get matched with a trainer.
           </p>
           <Button asChild size="lg" className="mt-8">

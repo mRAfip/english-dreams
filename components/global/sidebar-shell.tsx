@@ -271,7 +271,7 @@ function MobileTabBar({
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden"
     >
-      <div className="mx-auto flex w-full max-w-md items-center rounded-full bg-ink px-2 py-2 shadow-lg">
+      <div className="mx-auto flex w-full max-w-md items-center rounded-full bg-neutral-950/85 backdrop-blur-md border border-white/10 px-2 py-2 shadow-lg">
         {items.map((item) => (
           <TabBarItem
             key={item.href}
@@ -376,7 +376,7 @@ function MobileDrawer({
         aria-label="Close menu"
         onClick={onClose}
         className={cn(
-          "absolute inset-0 bg-ink/40 transition-opacity duration-200",
+          "absolute inset-0 bg-black/60 transition-opacity duration-200",
           open ? "opacity-100" : "opacity-0",
         )}
       />
@@ -387,7 +387,7 @@ function MobileDrawer({
         aria-modal="true"
         aria-label="Navigation"
         className={cn(
-          "absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col border-r border-border bg-card shadow-xl transition-transform duration-200 ease-out",
+          "absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col border-r border-border bg-neutral-950 shadow-xl transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
