@@ -8,7 +8,6 @@ import {
   Check,
   CheckCircle2,
   Loader2,
-  RotateCcw,
   Send,
   Timer,
   X,
@@ -90,13 +89,6 @@ export function QuizRunner({
     setAnswers((prev) => prev.map((a, i) => (i === index ? optionIndex : a)));
   }
 
-  function retake() {
-    setAnswers((questions ?? []).map(() => null));
-    setIndex(0);
-    setResult(null);
-    setRanOut(false);
-  }
-
   if (loadError) {
     return (
       <div className="py-16 text-center">
@@ -136,7 +128,6 @@ export function QuizRunner({
         quiz={quiz}
         result={result}
         ranOut={ranOut}
-        onRetake={retake}
         onExit={onExit}
       />
     );
@@ -151,9 +142,7 @@ export function QuizRunner({
       <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <Badge variant={quiz.kind === "assessment" ? "brand" : "neutral"}>
-              {quiz.kind === "assessment" ? "Graded assessment" : "Practice"}
-            </Badge>
+            <Badge variant="brand">Graded paper</Badge>
             <span className="text-xs text-mute">Week {quiz.weekNumber}</span>
           </div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
@@ -322,13 +311,11 @@ function QuizResult({
   quiz,
   result,
   ranOut,
-  onRetake,
   onExit,
 }: {
   quiz: StudentQuiz;
   result: QuizAttemptResult;
   ranOut: boolean;
-  onRetake: () => void;
   onExit: () => void;
 }) {
   const passed = result.score >= PASS_MARK;
@@ -372,17 +359,12 @@ function QuizResult({
             {result.correctCount} of {result.total} correct ·{" "}
             {passed
               ? "you passed this paper"
-              : `the pass mark is ${PASS_MARK}% — have another go`}
+              : `below the ${PASS_MARK}% pass mark`}{" "}
+            · this score is now on the leaderboard
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {quiz.kind === "practice" && (
-            <Button variant="secondary" onClick={onRetake}>
-              <RotateCcw />
-              Try again
-            </Button>
-          )}
           <Button onClick={onExit}>Done</Button>
         </div>
       </div>

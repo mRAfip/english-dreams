@@ -164,11 +164,11 @@ export function markPaper(
   return Math.round((correct / questions.length) * 100);
 }
 
-/** The pass mark for a graded assessment. Practice papers aren't gated. */
+/** The pass mark every weekend paper is graded against. */
 export const PASS_MARK = 60;
 
-/** Seconds a student gets per question. Graded assessments run tighter. */
-const SECONDS_PER_QUESTION = { practice: 60, assessment: 45 } as const;
+/** Seconds a student gets per question. Both weekend papers are graded alike. */
+const SECONDS_PER_QUESTION = { practice: 45, assessment: 45 } as const;
 
 /**
  * How long the paper is open once started, in seconds. Derived from the

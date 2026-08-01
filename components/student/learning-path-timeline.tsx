@@ -257,10 +257,6 @@ function QuizCard({ quiz, onSit }: { quiz: StudentQuiz; onSit: () => void }) {
             <Play />
             {quiz.state === "missed" ? "Sit late" : "Sit paper"}
           </Button>
-        ) : quiz.state === "done" && quiz.kind === "practice" ? (
-          <Button variant="ghost" size="sm" onClick={onSit}>
-            Retake
-          </Button>
         ) : null}
       </div>
     </article>

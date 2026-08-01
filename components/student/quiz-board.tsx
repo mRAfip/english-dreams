@@ -27,10 +27,10 @@ import {
 
 // Student > Quizzes — the weekend papers, one week at a time.
 //
-// Papers are a weekly thing: two close every week — a Saturday practice run and
-// the Sunday graded assessment — so the board is built on the same week rail as
-// the learning path (components/student/learning-path-timeline). Pick a week,
-// see its two papers. Consistent with how the whole programme is navigated.
+// Papers are a weekly thing: two close every week — a Saturday and a Sunday
+// paper, both graded — so the board is built on the same week rail as the
+// learning path (components/student/learning-path-timeline). Pick a week, see
+// its two papers. Consistent with how the whole programme is navigated.
 //
 // A summary row of numbers sits above the rail, because "how am I doing across
 // all the papers" is the second question a student has after "what can I sit".
@@ -113,8 +113,8 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
             Weekend papers
           </h1>
           <p className="text-sm text-body">
-            Two papers a week — a practice run on Saturday, the graded assessment
-            on Sunday. Each one is timed. Pass mark is {PASS_MARK}%.
+            Two graded papers a week — both count toward the leaderboard. Each is
+            timed and can only be sat once. Pass mark is {PASS_MARK}%.
           </p>
         </div>
       </header>
@@ -180,7 +180,7 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
           <p className="text-sm text-body">
             {week.state === "locked"
               ? "These papers unlock when you reach this week."
-              : "Sit the practice first, then the graded assessment."}
+              : "Both papers are graded — your combined marks set your place on this week's leaderboard."}
           </p>
         </div>
 
@@ -232,7 +232,6 @@ function QuizCard({
   quiz: StudentQuiz;
   onSit: (quiz: StudentQuiz) => void;
 }) {
-  const graded = quiz.kind === "assessment";
   const passed = (quiz.score ?? 0) >= PASS_MARK;
   const minutes = Math.round(quizDurationSec(quiz) / 60);
 
@@ -268,14 +267,12 @@ function QuizCard({
           <div className="min-w-0">
             <div className="text-sm font-semibold text-ink">{quiz.title}</div>
             <div className="text-xs capitalize text-mute">
-              {quiz.day} · {graded ? "graded" : "practice"}
+              {quiz.day} · graded
             </div>
           </div>
         </div>
 
-        <Badge variant={graded ? "brand" : "neutral"}>
-          {graded ? "Graded" : "Practice"}
-        </Badge>
+        <Badge variant="brand">Graded</Badge>
       </div>
 
       {/* The paper's shape: how many questions, how long. */}
@@ -337,11 +334,6 @@ function QuizCard({
           <Button size="sm" variant="secondary" onClick={() => onSit(quiz)}>
             <Play />
             Sit late
-          </Button>
-        )}
-        {quiz.state === "done" && quiz.kind === "practice" && (
-          <Button size="sm" variant="tertiary" onClick={() => onSit(quiz)}>
-            Retake
           </Button>
         )}
       </div>

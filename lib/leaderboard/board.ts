@@ -103,8 +103,13 @@ export async function loadAdminLeaderboard(): Promise<WeeklyLeaderboard[]> {
       return pct === undefined ? null : toMarks(pct);
     };
 
-    const entries = rankEntries(
-      students.map((s) => ({
+    // A week's board ranks only the students who have reached it — i.e. sat at
+    // least one of its two papers. A student who hasn't taken either quiz isn't
+    // "behind", they simply aren't competing at this level yet, so they're left
+    // off entirely rather than shown as a zero. Their row appears the moment
+    // they sit their first paper, and grows as they sit the second.
+    const rows = students
+      .map((s) => ({
         studentId: s.id,
         name: s.name,
         avatarUrl: s.avatarUrl,
@@ -113,8 +118,10 @@ export async function loadAdminLeaderboard(): Promise<WeeklyLeaderboard[]> {
           saturday: markFor(s.id, satId),
           sunday: markFor(s.id, sunId),
         },
-      })),
-    );
+      }))
+      .filter((r) => r.scores.saturday !== null || r.scores.sunday !== null);
+
+    const entries = rankEntries(rows);
 
     return {
       weekNumber: week.weekNumber,

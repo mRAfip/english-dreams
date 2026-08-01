@@ -51,8 +51,7 @@ export function CertificateView({
 }) {
   const days = allDays(journey);
   const quizzes = allQuizzes(journey);
-  const assessments = quizzes.filter((q) => q.kind === "assessment");
-  const satAssessments = assessments.filter((q) => q.state === "done");
+  const satAssessments = quizzes.filter((q) => q.state === "done");
   const average = quizAverage(journey);
 
   const requirements: Requirement[] = [
@@ -64,11 +63,11 @@ export function CertificateView({
       met: journey.daysCompleted >= TOTAL_TEACHING_DAYS,
     },
     {
-      label: "Sit every Sunday assessment",
-      detail: "Twelve graded papers, one per week",
+      label: "Sit every weekend paper",
+      detail: "Two graded papers per week",
       done: satAssessments.length,
-      total: assessments.length,
-      met: satAssessments.length >= assessments.length,
+      total: quizzes.length,
+      met: satAssessments.length >= quizzes.length,
     },
     {
       label: `Average ${PASS_MARK}% or above`,

@@ -75,8 +75,9 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
             Leaderboard
           </h1>
           <p className="text-sm text-body">
-            Ranked on the weekend quizzes — Saturday practice plus Sunday
-            assessment, {WEEKLY_MAX_SCORE} marks in total.
+            Ranked on the week's two graded weekend papers — Saturday plus
+            Sunday, {WEEKLY_MAX_SCORE} marks in total. Only students who have sat
+            a paper this week are shown.
           </p>
         </div>
 
@@ -149,12 +150,8 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
                       <TableRow className="hover:bg-transparent">
                         <TableHead className="w-16">Rank</TableHead>
                         <TableHead>Student</TableHead>
-                        <TableHead className="text-right">
-                          Sat · practice
-                        </TableHead>
-                        <TableHead className="text-right">
-                          Sun · assessment
-                        </TableHead>
+                        <TableHead className="text-right">Saturday</TableHead>
+                        <TableHead className="text-right">Sunday</TableHead>
                         <TableHead className="text-right">Total</TableHead>
                       </TableRow>
                     </TableHeader>

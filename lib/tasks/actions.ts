@@ -282,6 +282,7 @@ export type CommentResult =
 export async function postReviewComment(
   submissionId: string,
   body: string,
+  questionId?: string,
 ): Promise<CommentResult> {
   const me = await getCurrentUser();
   if (!me) return { ok: false, error: "Not signed in." };
@@ -291,7 +292,12 @@ export async function postReviewComment(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("task_review_comments")
-    .insert({ submission_id: submissionId, author_id: me.id, body: trimmed })
+    .insert({ 
+      submission_id: submissionId, 
+      author_id: me.id, 
+      body: trimmed,
+      question_id: questionId || null 
+    })
     .select("id, created_at")
     .single();
   if (error || !data) {

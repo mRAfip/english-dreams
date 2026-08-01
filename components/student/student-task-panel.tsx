@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Mic, Paperclip, Send, Square, X } from "lucide-react";
+import { Loader2, Mic, Paperclip, Send, Square, X, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,6 +59,16 @@ export function StudentTaskPanel({
   const router = useRouter();
   const editable = !submission || submission.status === "redo";
   const [submitting, setSubmitting] = React.useState(false);
+  const [openComments, setOpenComments] = React.useState<Record<string, boolean>>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      if (q) {
+        return { [q]: true };
+      }
+    }
+    return {};
+  });
 
   const [answers, setAnswers] = React.useState<Record<string, AnswerState>>(() => {
     const bySlot = new Map(
@@ -226,6 +236,41 @@ export function StudentTaskPanel({
               />
             </div>
           )}
+
+          {/* Collapsible question-specific review comments (only when a submission exists) */}
+          {submission && (
+            <div className="mt-4 border-t border-border pt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setOpenComments((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
+                }
+                className="flex items-center gap-2 text-xs font-semibold text-body hover:text-ink hover:bg-secondary/40"
+              >
+                <MessageSquare className="size-4" />
+                {openComments[q.id] ? "Hide comments" : "Comment on question"}
+                {comments.filter((c) => c.questionId === q.id).length > 0 && (
+                  <Badge variant="neutral" className="ml-1.5 px-1.5 py-0.5 text-[10px]">
+                    {comments.filter((c) => c.questionId === q.id).length}
+                  </Badge>
+                )}
+              </Button>
+
+              {openComments[q.id] && (
+                <div className="mt-3">
+                  <ReviewThread
+                    submissionId={submission.id}
+                    meId={meId}
+                    initialComments={comments.filter((c) => c.questionId === q.id)}
+                    authors={threadAuthors}
+                    placeholder="Discuss this question…"
+                    questionId={q.id}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ))}
 
@@ -244,12 +289,12 @@ export function StudentTaskPanel({
       ) : null}
 
       {submission ? (
-        <div>
+        <div id="discussion">
           <h3 className="mb-2 text-sm font-semibold text-ink">Trainer review</h3>
           <ReviewThread
             submissionId={submission.id}
             meId={meId}
-            initialComments={comments}
+            initialComments={comments.filter((c) => !c.questionId)}
             authors={threadAuthors}
             placeholder="Reply to your trainer…"
           />

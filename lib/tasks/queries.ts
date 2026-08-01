@@ -282,7 +282,7 @@ export async function getReviewComments(
   const supabase = await createClient();
   const { data } = await supabase
     .from("task_review_comments")
-    .select("id, author_id, body, created_at")
+    .select("id, author_id, body, created_at, question_id")
     .eq("submission_id", submissionId)
     .order("created_at", { ascending: true });
   const rows = (data ?? []) as {
@@ -290,6 +290,7 @@ export async function getReviewComments(
     author_id: string | null;
     body: string;
     created_at: string;
+    question_id: string | null;
   }[];
   if (rows.length === 0) return [];
 
@@ -307,6 +308,111 @@ export async function getReviewComments(
       body: r.body,
       createdAt: r.created_at,
       sentAt: formatMessageTime(r.created_at),
+      questionId: r.question_id,
     };
   });
 }
+
+export type StudentSubmissionItem = {
+  submissionId: string;
+  dayNumber: number;
+  taskTitle: string;
+  status: SubmissionStatus;
+  submittedAt: string;
+  commentCount: number;
+  latestComment: {
+    body: string;
+    authorName: string;
+    sentAt: string;
+    questionId: string | null;
+  } | null;
+};
+
+export async function getStudentSubmissions(
+  studentId: string,
+): Promise<StudentSubmissionItem[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("task_submissions")
+    .select(
+      "id, status, submitted_at, content_days!inner(weekday, task_title, content_weeks!inner(week_number))",
+    )
+    .eq("student_id", studentId)
+    .order("submitted_at", { ascending: false });
+
+  const rows = (data ?? []) as unknown as {
+    id: string;
+    status: SubmissionStatus;
+    submitted_at: string;
+    content_days: {
+      weekday: number;
+      task_title: string;
+      content_weeks: { week_number: number } | null;
+    } | null;
+  }[];
+  if (rows.length === 0) return [];
+
+  const submissionIds = rows.map((r) => r.id);
+
+  // Get comments counts and latest comment per submission
+  const { data: comments } = await supabase
+    .from("task_review_comments")
+    .select("id, submission_id, body, created_at, author_id, question_id")
+    .in("submission_id", submissionIds)
+    .order("created_at", { ascending: true });
+
+  const subComments = (comments ?? []) as {
+    id: string;
+    submission_id: string;
+    body: string;
+    created_at: string;
+    author_id: string | null;
+    question_id: string | null;
+  }[];
+
+  const commentsGrouped = new Map<string, typeof subComments>();
+  for (const c of subComments) {
+    if (!commentsGrouped.has(c.submission_id)) {
+      commentsGrouped.set(c.submission_id, []);
+    }
+    commentsGrouped.get(c.submission_id)!.push(c);
+  }
+
+  // Get participant info for authors
+  const authorIds = [
+    ...new Set(subComments.map((c) => c.author_id).filter((id): id is string => !!id)),
+  ];
+  const info = await participantInfo(authorIds);
+
+  return rows.map((r) => {
+    const day = r.content_days;
+    const week = day?.content_weeks;
+    const dayNumber =
+      day && week
+        ? (week.week_number - 1) * TEACHING_DAYS_PER_WEEK + day.weekday
+        : 0;
+
+    const list = commentsGrouped.get(r.id) ?? [];
+    const latestC = list[list.length - 1] ?? null;
+    const latestCommentInfo = latestC
+      ? {
+          body: latestC.body,
+          authorName: latestC.author_id ? info.get(latestC.author_id)?.name ?? "User" : "User",
+          sentAt: formatMessageTime(latestC.created_at),
+          questionId: latestC.question_id,
+        }
+      : null;
+
+    return {
+      submissionId: r.id,
+      dayNumber,
+      taskTitle: day?.task_title || `Day ${dayNumber} task`,
+      status: r.status,
+      submittedAt: formatMessageTime(r.submitted_at),
+      commentCount: list.length,
+      latestComment: latestCommentInfo,
+    };
+  });
+}
+

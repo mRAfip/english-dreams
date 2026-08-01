@@ -81,19 +81,19 @@ function mapQuizzes(week: WeekRow): WeekendQuiz[] {
   const rows = week.content_quizzes ?? [];
   const byDay = (day: "saturday" | "sunday") => rows.find((q) => q.day === day);
 
-  const build = (
-    day: "saturday" | "sunday",
-    kind: "practice" | "assessment",
-  ): WeekendQuiz => {
+  // Both papers are graded assessments; the default title names the day, not a
+  // practice/assessment distinction (which no longer exists).
+  const build = (day: "saturday" | "sunday"): WeekendQuiz => {
     const row = byDay(day);
     const slug = `w${week.week_number}-${day === "saturday" ? "sat" : "sun"}`;
+    const defaultTitle = `Week ${week.week_number} ${day === "saturday" ? "Saturday" : "Sunday"} paper`;
     if (!row) {
       return {
         id: slug,
         quizId: null,
         day,
-        title: `Week ${week.week_number} ${kind}`,
-        kind,
+        title: defaultTitle,
+        kind: "assessment",
         questionCount: 0,
         status: "empty",
       };
@@ -102,14 +102,14 @@ function mapQuizzes(week: WeekRow): WeekendQuiz[] {
       id: slug,
       quizId: row.id,
       day,
-      title: row.title || `Week ${week.week_number} ${kind}`,
-      kind: row.kind,
+      title: row.title || defaultTitle,
+      kind: "assessment",
       questionCount: row.content_quiz_questions?.[0]?.count ?? 0,
       status: row.status,
     };
   };
 
-  return [build("saturday", "practice"), build("sunday", "assessment")];
+  return [build("saturday"), build("sunday")];
 }
 
 /** Summary status over the parts: published if any is, draft if any exists. */

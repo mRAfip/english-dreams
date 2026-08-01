@@ -73,6 +73,7 @@ export type ReviewComment = {
   body: string;
   createdAt: string;
   sentAt: string;
+  questionId?: string | null;
 };
 
 /** A row in the trainer's review queue. */

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BookOpenCheck,
   CheckCircle2,
@@ -10,9 +11,13 @@ import {
   Lock,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 import { DayModuleCard } from "@/components/student/day-module-card";
 import {
   awaitingReview,
@@ -24,6 +29,7 @@ import {
   type StudentQuiz,
   type StudentWeek,
 } from "@/lib/student/progress";
+import type { StudentSubmissionItem } from "@/lib/tasks/queries";
 
 // Student home — mobile-first. The order answers a learner's morning questions
 // top to bottom: who am I greeting, where in the week am I, how's my task/review
@@ -39,15 +45,40 @@ function greetingFor(hour: number): string {
 export function StudentOverview({
   name,
   journey,
+  submissions = [],
 }: {
   name: string;
   journey: StudentJourney;
+  submissions?: StudentSubmissionItem[];
 }) {
   const todayDay = today(journey);
-  const [activeWeekNum, setActiveWeekNum] = useState(journey.currentWeek);
-  const [selectedDayNumber, setSelectedDayNumber] = useState<number | null>(
+  const [activeWeekNum, setActiveWeekNum] = React.useState(journey.currentWeek);
+  const [selectedDayNumber, setSelectedDayNumber] = React.useState<number | null>(
     todayDay ? todayDay.dayNumber : null
   );
+
+  const router = useRouter();
+  const supabase = React.useMemo(() => createClient(), []);
+
+  React.useEffect(() => {
+    const channel = supabase
+      .channel("student-dashboard-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "task_review_comments" },
+        () => router.refresh()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "task_submissions" },
+        () => router.refresh()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, router]);
 
   const activeWeek = journey.weeks[activeWeekNum - 1];
   const waiting = awaitingReview(journey);
@@ -139,6 +170,8 @@ export function StudentOverview({
         redo={redo.length}
       />
 
+
+
       {/* Today's day */}
       <section aria-labelledby="today-heading" className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
@@ -184,6 +217,102 @@ export function StudentOverview({
           </p>
         )}
       </section>
+
+      {/* Workspace: Submitted Tasks & Discussions */}
+      <section id="discussions" aria-labelledby="discussions-heading" className="flex flex-col gap-4 mt-2">
+        <div className="flex items-center justify-between">
+          <h2 id="discussions-heading" className="font-display text-lg font-extrabold text-ink">
+            My Submissions & Discussions
+          </h2>
+          <span className="text-xs text-mute font-medium">{submissions.length} submitted</span>
+        </div>
+
+        {submissions.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card py-10 px-4 text-center">
+            <MessageSquare className="mx-auto size-8 text-mute/50 mb-3" />
+            <h3 className="text-sm font-semibold text-ink">No homework tasks submitted yet</h3>
+            <p className="mx-auto mt-1 max-w-xs text-xs text-mute">
+              Your assignments and follow-up trainer discussions will be listed here once you start submitting class tasks.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {submissions.map((sub) => {
+              const isRedo = sub.status === "redo";
+              const isApproved = sub.status === "approved";
+
+              let badgeVariant: "neutral" | "brand" | "positive" | "negative" = "neutral";
+              let badgeText = "Submitted";
+              if (isRedo) {
+                badgeVariant = "negative";
+                badgeText = "Needs Redo";
+              } else if (isApproved) {
+                badgeVariant = "positive";
+                badgeText = "Approved";
+              }
+
+              return (
+                <div
+                  key={sub.submissionId}
+                  className={cn(
+                    "group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/20 hover:shadow-xs",
+                    isRedo && "border-destructive/20 bg-destructive/[0.02]"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-mute uppercase tracking-wider">Day {sub.dayNumber}</span>
+                        <Badge variant={badgeVariant}>{badgeText}</Badge>
+                      </div>
+                      <h3 className="mt-1 font-display font-bold text-ink text-sm sm:text-base truncate group-hover:text-primary transition-colors">
+                        {sub.taskTitle}
+                      </h3>
+                    </div>
+                    {sub.commentCount > 0 && (
+                      <div className="flex items-center gap-1 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs text-body font-semibold">
+                        <MessageSquare className="size-3 text-mute" />
+                        <span>{sub.commentCount}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {sub.latestComment ? (
+                    <div className="rounded-xl bg-secondary/35 p-3 text-xs text-body border border-border/10">
+                      <div className="flex items-center justify-between font-semibold text-ink-deep mb-1">
+                        <span>{sub.latestComment.authorName}</span>
+                        <span className="text-[10px] font-normal text-mute">{sub.latestComment.sentAt}</span>
+                      </div>
+                      <p className="line-clamp-2 italic text-body/90 leading-relaxed">
+                        &ldquo;{sub.latestComment.body}&rdquo;
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-mute italic">No messages in this discussion yet.</p>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3 border-t border-border/30 pt-3 mt-1">
+                    <span className="text-xs text-mute">
+                      Sent {sub.submittedAt}
+                    </span>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant={isRedo ? "soft" : "secondary"}
+                      className="h-8 rounded-lg text-xs font-bold"
+                    >
+                      <Link href={`/student/learning-path/${sub.dayNumber}?tab=task${sub.latestComment?.questionId ? `&q=${sub.latestComment.questionId}` : ""}#discussion`}>
+                        {isRedo ? "Resubmit Task" : sub.commentCount > 0 ? "Reply to Trainer" : "Open Chat"}
+                        <ArrowRight className="size-3.5 ml-1 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
@@ -205,7 +334,7 @@ function WeekStrip({
   const sun = week.quizzes.find((q) => q.day === "sunday");
 
   return (
-    <div className="flex items-center justify-between gap-1.5 w-full bg-secondary/10 p-1.5 rounded-fullborder border-white/5">
+    <div className="flex items-center justify-between gap-1.5 w-full bg-secondary/10 p-1.5 rounded-full border border-white/5">
       {week.days.map((d) => (
         <DayPill
           key={d.dayNumber}

@@ -80,6 +80,18 @@ export function StudentDayDetail({
     () => videos.find((v) => !v.watched)?.id ?? videos[0]?.id ?? null,
   );
 
+  const [activeTab, setActiveTab] = React.useState("videos");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "task" || tab === "notes" || tab === "videos") {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
+
   const active = videos.find((v) => v.id === activeId) ?? videos[0] ?? null;
   // Done once a submission exists that isn't awaiting a redo.
   const completed =
@@ -170,7 +182,7 @@ export function StudentDayDetail({
             </div>
 
             {/* Videos / Notes / Task */}
-            <Tabs defaultValue="videos" className="mt-5">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-5">
               <TabsList className="w-full">
                 <TabsTrigger value="videos" className="flex-1 justify-center">
                   <Video className="size-4" />

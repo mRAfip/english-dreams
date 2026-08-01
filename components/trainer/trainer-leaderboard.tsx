@@ -93,8 +93,9 @@ export function TrainerLeaderboard({
             Leaderboard
           </h1>
           <p className="text-sm text-body">
-            Your students, ranked on the weekend quizzes — Saturday practice plus
-            Sunday assessment, {WEEKLY_MAX_SCORE} marks in total.
+            Your students, ranked on the week's two graded weekend papers —
+            Saturday plus Sunday, {WEEKLY_MAX_SCORE} marks in total. Only those
+            who have sat a paper this week appear.
           </p>
         </div>
 
@@ -176,10 +177,10 @@ export function TrainerLeaderboard({
                           Cohort standing
                         </TableHead>
                         <TableHead className="hidden md:table-cell text-right">
-                          Sat · practice
+                          Saturday
                         </TableHead>
                         <TableHead className="hidden md:table-cell text-right">
-                          Sun · assessment
+                          Sunday
                         </TableHead>
                         <TableHead className="text-right">Total</TableHead>
                       </TableRow>

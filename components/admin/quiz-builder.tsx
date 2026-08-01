@@ -138,9 +138,7 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
       <header className="mt-4 flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <Badge variant={quiz.kind === "assessment" ? "brand" : "neutral"}>
-              {quiz.kind === "assessment" ? "Graded assessment" : "Practice"}
-            </Badge>
+            <Badge variant="brand">Graded paper</Badge>
             <span className="text-xs capitalize text-mute">
               Week {quiz.weekNumber} · {quiz.day}
             </span>

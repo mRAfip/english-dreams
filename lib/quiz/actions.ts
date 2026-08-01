@@ -19,8 +19,10 @@ import type {
 // Quiz management. Admin authoring (save questions, publish) and the student
 // taking flow (load questions without answers, submit → server-side marking).
 
+// Both weekend papers are graded assessments now — the Saturday/Sunday split is
+// only about when they fall, not how they count.
 const KIND_FOR: Record<QuizDay, QuizKind> = {
-  saturday: "practice",
+  saturday: "assessment",
   sunday: "assessment",
 };
 
@@ -199,6 +201,18 @@ export async function submitQuizAttempt(
   const userId = await currentUserId();
   const supabase = await createClient();
 
+  // One attempt per paper — a submitted paper is final, so a second submission
+  // is refused rather than allowed to overwrite the recorded score.
+  const { data: prior } = await supabase
+    .from("student_quiz_attempts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("quiz_id", quizId)
+    .maybeSingle();
+  if (prior) {
+    throw new Error("You've already sat this paper — it can only be taken once.");
+  }
+
   const { data, error } = await supabase
     .from("content_quiz_questions")
     .select("id, position, prompt, options, correct_index, explanation")
@@ -225,17 +239,14 @@ export async function submitQuizAttempt(
 
   const { error: attemptError } = await supabase
     .from("student_quiz_attempts")
-    .upsert(
-      {
-        user_id: userId,
-        quiz_id: quizId,
-        score,
-        correct_count: correctCount,
-        total,
-        answers: answers.map((a) => (a === null ? -1 : a)),
-      },
-      { onConflict: "user_id,quiz_id" },
-    );
+    .insert({
+      user_id: userId,
+      quiz_id: quizId,
+      score,
+      correct_count: correctCount,
+      total,
+      answers: answers.map((a) => (a === null ? -1 : a)),
+    });
   if (attemptError) {
     throw new Error(`Failed to record attempt: ${attemptError.message}`);
   }

@@ -224,19 +224,33 @@ export function buildJourney(
       videoWatchedParts: [],
     };
 
-  // The frontier: the latest released day. Everything released before it reads
-  // as done; the frontier itself is "today"; unreleased days stay locked.
-  const releasedNums = allDaysFlat
-    .filter(isReleased)
-    .map((d) => d.dayNumber)
-    .sort((a, b) => a - b);
-  const currentDay = releasedNums.length
-    ? releasedNums[releasedNums.length - 1]
-    : 0;
-  // Real completion: released days the student has marked done.
-  const daysCompleted = releasedNums.filter(
-    (n) => progressFor(n).taskCompleted,
-  ).length;
+  // Progression is sequential and completion-driven — it reads from the
+  // student's own record (student_day_progress), NOT from how much content has
+  // been published. A day is "done" only once the student has completed it; the
+  // next day opens only then. Days past the one they're on stay locked, even if
+  // their content is already published. Publishing is necessary to unlock a day,
+  // but never sufficient on its own.
+  const sortedDays = [...allDaysFlat].sort((a, b) => a.dayNumber - b.dayNumber);
+  const isDone = (dayNumber: number): boolean =>
+    progressFor(dayNumber).taskCompleted;
+  const daysCompleted = sortedDays.filter((d) => isDone(d.dayNumber)).length;
+
+  // The frontier: the first day, in order, the student hasn't completed.
+  const frontier = sortedDays.find((d) => !isDone(d.dayNumber)) ?? null;
+  // The day they can work on right now: the frontier, but only if its content
+  // is released. If the next day isn't published yet, there is no open day —
+  // the student is caught up and waiting for the next class.
+  const activeDay = frontier && isReleased(frontier) ? frontier.dayNumber : 0;
+  const anyReleased = sortedDays.some(isReleased);
+  // What "Day X of Y" points at: the open day; else the day being waited on;
+  // else the last day once the whole programme is done; else 0 (nothing yet).
+  const currentDay = activeDay
+    ? activeDay
+    : frontier
+      ? anyReleased
+        ? frontier.dayNumber
+        : 0
+      : totalDays;
   const currentWeek = Math.min(
     Math.max(1, currentDay ? weekNumberForDay(currentDay) : 1),
     Math.max(1, totalWeeks),
@@ -244,11 +258,11 @@ export function buildJourney(
 
   const weeks: StudentWeek[] = curriculum.map((week) => {
     const days = week.days.map<StudentDay>((day) => {
-      const state: DayState = !isReleased(day)
-        ? "locked"
-        : day.dayNumber === currentDay
+      const state: DayState = isDone(day.dayNumber)
+        ? "done"
+        : day.dayNumber === activeDay
           ? "today"
-          : "done";
+          : "locked";
       const progress = progressFor(day.dayNumber);
       const watchedPartIds = new Set(progress.videoWatchedParts);
       const videos = day.videos

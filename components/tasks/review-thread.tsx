@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/components/ui/toast";
 import { ROLE_LABEL } from "@/lib/auth/roles";
 import { formatMessageTime } from "@/lib/inbox/format";
 import { postReviewComment } from "@/lib/tasks/actions";
@@ -23,12 +24,14 @@ export function ReviewThread({
   initialComments,
   authors,
   placeholder = "Write a comment",
+  questionId = null,
 }: {
   submissionId: string;
   meId: string;
   initialComments: ReviewComment[];
   authors: Record<string, AuthorInfo>;
   placeholder?: string;
+  questionId?: string | null;
 }) {
   const supabase = React.useMemo(() => createClient(), []);
   const [comments, setComments] = React.useState<ReviewComment[]>(initialComments);
@@ -52,7 +55,7 @@ export function ReviewThread({
 
   React.useEffect(() => {
     const channel = supabase
-      .channel(`task-review:${submissionId}`)
+      .channel(`task-review:${submissionId}:${questionId || "overall"}`)
       .on(
         "postgres_changes",
         {
@@ -67,8 +70,15 @@ export function ReviewThread({
             author_id: string | null;
             body: string;
             created_at: string;
+            question_id?: string | null;
           };
           if (row.author_id === meId) return; // my own echo — handled optimistically
+          
+          // Check if this comment belongs to this thread's scope (this question or overall)
+          const targetQId = row.question_id || null;
+          const currentQId = questionId || null;
+          if (targetQId !== currentQId) return;
+
           setComments((prev) => {
             if (prev.some((c) => c.id === row.id)) return prev;
             const info = row.author_id ? nameMap.get(row.author_id) : undefined;
@@ -82,6 +92,7 @@ export function ReviewThread({
                 body: row.body,
                 createdAt: row.created_at,
                 sentAt: formatMessageTime(row.created_at),
+                questionId: row.question_id,
               },
             ];
           });
@@ -91,7 +102,7 @@ export function ReviewThread({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, submissionId, meId, nameMap]);
+  }, [supabase, submissionId, meId, nameMap, questionId]);
 
   async function send() {
     const trimmed = body.trim();
@@ -107,11 +118,12 @@ export function ReviewThread({
       body: trimmed,
       createdAt: new Date().toISOString(),
       sentAt: "Now",
+      questionId: questionId || null,
     };
     setComments((prev) => [...prev, optimistic]);
     setBody("");
 
-    const result = await postReviewComment(submissionId, trimmed);
+    const result = await postReviewComment(submissionId, trimmed, questionId ?? undefined);
     setSending(false);
     if (result.ok) {
       setComments((prev) =>
@@ -124,6 +136,9 @@ export function ReviewThread({
     } else {
       setComments((prev) => prev.filter((c) => c.id !== tempId));
       setBody(trimmed);
+      toast.error("Couldn't post comment", {
+        description: result.error,
+      });
     }
   }
 

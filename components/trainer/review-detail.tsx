@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, RotateCcw, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
@@ -56,6 +56,7 @@ export function ReviewDetail({
 }) {
   const router = useRouter();
   const [pending, setPending] = React.useState<null | "approved" | "redo">(null);
+  const [openComments, setOpenComments] = React.useState<Record<string, boolean>>({});
 
   const answerBy = React.useMemo(() => {
     const m = new Map<string, SubmissionAnswer>();
@@ -140,6 +141,39 @@ export function ReviewDetail({
                   />
                 </div>
               )}
+
+              {/* Collapsible question-specific review comments */}
+              <div className="mt-4 border-t border-border pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setOpenComments((prev) => ({ ...prev, [q.id]: !prev[q.id] }))
+                  }
+                  className="flex items-center gap-2 text-xs font-semibold text-body hover:text-ink hover:bg-secondary/40"
+                >
+                  <MessageSquare className="size-4" />
+                  {openComments[q.id] ? "Hide comments" : "Comment on question"}
+                  {comments.filter((c) => c.questionId === q.id).length > 0 && (
+                    <Badge variant="neutral" className="ml-1.5 px-1.5 py-0.5 text-[10px]">
+                      {comments.filter((c) => c.questionId === q.id).length}
+                    </Badge>
+                  )}
+                </Button>
+
+                {openComments[q.id] && (
+                  <div className="mt-3">
+                    <ReviewThread
+                      submissionId={detail.submissionId}
+                      meId={meId}
+                      initialComments={comments.filter((c) => c.questionId === q.id)}
+                      authors={threadAuthors}
+                      placeholder="Comment on this question…"
+                      questionId={q.id}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           ))
         )}
@@ -171,7 +205,7 @@ export function ReviewDetail({
         <ReviewThread
           submissionId={detail.submissionId}
           meId={meId}
-          initialComments={comments}
+          initialComments={comments.filter((c) => !c.questionId)}
           authors={threadAuthors}
           placeholder={`Comment for ${detail.studentName.split(" ")[0]}…`}
         />
