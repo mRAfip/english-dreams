@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2, Plus, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createStudent, setStudentAccess } from "@/lib/student/manage";
-import type { FeeStatus, StudentRow } from "@/lib/student/directory";
+import type { StudentRow } from "@/lib/student/directory";
 
 // Admin > Students — the real roster, read from profiles + role assignments,
 // each with the trainer they're assigned to. "Add student" provisions an account
@@ -45,18 +44,6 @@ import type { FeeStatus, StudentRow } from "@/lib/student/directory";
 type TrainerOption = { id: string; name: string };
 /** A course an admin can enrol a student on. */
 type CourseOption = { id: string; title: string };
-
-const FEE_LABEL: Record<FeeStatus, string> = {
-  paid: "Fees paid",
-  unpaid: "Fees due",
-  waived: "Fees waived",
-};
-
-const FEE_VARIANT: Record<FeeStatus, "positive" | "warning" | "neutral"> = {
-  paid: "positive",
-  unpaid: "warning",
-  waived: "neutral",
-};
 
 export function StudentDirectory({
   students,
@@ -200,9 +187,6 @@ export function StudentDirectory({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-3">
-                      <Badge variant={FEE_VARIANT[s.feeStatus]}>
-                        {FEE_LABEL[s.feeStatus]}
-                      </Badge>
                       <AccessToggle student={s} />
                       <ChevronRight className="size-4 text-mute" />
                     </div>
@@ -388,6 +372,9 @@ function AccessToggle({ student }: { student: StudentRow }) {
       const result = await setStudentAccess({
         id: student.id,
         accessEnabled: next,
+        // Pass the stored value straight back. The fee UI is pulled pending a
+        // proper fee-management feature, but the column is still live — this
+        // must not overwrite it with a default.
         feeStatus: student.feeStatus,
       });
       if (result.ok) {

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  CreditCard,
   KeyRound,
   LibraryBig,
   Loader2,
@@ -169,49 +168,43 @@ export function StudentDetail({
         </dl>
       </section>
 
-      {/* Access & fees */}
-      <AccessFeesSection student={student} />
+      {/* Access */}
+      <AccessSection student={student} />
     </div>
   );
 }
 
-const FEE_LABEL: Record<FeeStatus, string> = {
-  paid: "Paid",
-  unpaid: "Unpaid",
-  waived: "Waived",
-};
-
-const FEE_VARIANT: Record<FeeStatus, "positive" | "warning" | "neutral"> = {
-  paid: "positive",
-  unpaid: "warning",
-  waived: "neutral",
-};
-
 /**
- * The access toggle + fee status control. Each control persists IMMEDIATELY via
- * setStudentAccess — no separate Save step, so what the admin sees is always
- * what's in the database. Local state is optimistic and reverts on error, and
- * the outcome is announced with a toast.
+ * The access toggle. It persists IMMEDIATELY via setStudentAccess — no separate
+ * Save step, so what the admin sees is always what's in the database. Local
+ * state is optimistic and reverts on error, and the outcome is announced with
+ * a toast.
  */
-function AccessFeesSection({ student }: { student: StudentRow }) {
+// Access only. The fee controls that used to live here are pulled pending a
+// proper student fee-management feature — every student defaults to "unpaid",
+// so the tag flagged the whole roster and meant nothing.
+//
+// Nothing was removed below the UI: student_access.fee_status, setStudentAccess
+// and StudentRow.feeStatus are all intact, and the student's stored value is
+// passed straight back on every save so toggling access never overwrites it.
+function AccessSection({ student }: { student: StudentRow }) {
   const router = useRouter();
   const [accessEnabled, setAccessEnabled] = React.useState(
     student.accessEnabled,
   );
-  const [feeStatus, setFeeStatus] = React.useState<FeeStatus>(student.feeStatus);
-  const [pending, setPending] = React.useState<null | "access" | "fee">(null);
+  const feeStatus = student.feeStatus;
+  const [pending, setPending] = React.useState<null | "access">(null);
 
   // Persist one change immediately. Optimistically applies `next`, calls the
   // action, rolls back to `prev` on failure, and toasts either way.
   async function persist(
-    field: "access" | "fee",
+    field: "access",
     next: { accessEnabled: boolean; feeStatus: FeeStatus },
     prev: { accessEnabled: boolean; feeStatus: FeeStatus },
     successMessage: string,
   ) {
     setPending(field);
     setAccessEnabled(next.accessEnabled);
-    setFeeStatus(next.feeStatus);
     try {
       const result = await setStudentAccess({
         id: student.id,
@@ -223,12 +216,10 @@ function AccessFeesSection({ student }: { student: StudentRow }) {
         router.refresh();
       } else {
         setAccessEnabled(prev.accessEnabled);
-        setFeeStatus(prev.feeStatus);
         toast.error("Couldn't save changes", { description: result.error });
       }
     } catch (e) {
       setAccessEnabled(prev.accessEnabled);
-      setFeeStatus(prev.feeStatus);
       toast.error("Couldn't save changes", {
         description: e instanceof Error ? e.message : "Something went wrong.",
       });
@@ -251,19 +242,9 @@ function AccessFeesSection({ student }: { student: StudentRow }) {
     );
   }
 
-  function changeFee(next: FeeStatus) {
-    const prev = { accessEnabled, feeStatus };
-    persist(
-      "fee",
-      { accessEnabled, feeStatus: next },
-      prev,
-      `Fee status set to ${FEE_LABEL[next].toLowerCase()}`,
-    );
-  }
-
   return (
-    <section className="mt-8" aria-label="Access and fees">
-      <h2 className="text-sm font-semibold text-ink">Access &amp; fees</h2>
+    <section className="mt-8" aria-label="Access">
+      <h2 className="text-sm font-semibold text-ink">Access</h2>
       <p className="mt-1 text-xs text-mute">Changes save automatically.</p>
       <div className="mt-3 rounded-xl border border-border bg-card p-4 sm:p-5">
         <div className="flex flex-col gap-5">
@@ -302,33 +283,6 @@ function AccessFeesSection({ student }: { student: StudentRow }) {
                 aria-labelledby="student-access-label"
               />
             </div>
-          </div>
-
-          {/* Fee status */}
-          <div className="flex flex-col gap-2 border-t border-border pt-5">
-            <div className="flex items-center gap-3">
-              <CreditCard className="size-4 shrink-0 text-mute" />
-              <Label htmlFor="fee-status" className="text-sm font-medium text-ink">
-                Fee status
-              </Label>
-              <Badge variant={FEE_VARIANT[feeStatus]}>
-                {FEE_LABEL[feeStatus]}
-              </Badge>
-              {pending === "fee" ? (
-                <Loader2 className="size-4 animate-spin text-mute" />
-              ) : null}
-            </div>
-            <select
-              id="fee-status"
-              value={feeStatus}
-              onChange={(e) => changeFee(e.target.value as FeeStatus)}
-              disabled={busy}
-              className="h-11 w-full rounded-md border border-input bg-card px-4 text-sm text-foreground shadow-sm transition-colors focus-visible:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60 sm:max-w-xs"
-            >
-              <option value="unpaid">Unpaid</option>
-              <option value="paid">Paid</option>
-              <option value="waived">Waived</option>
-            </select>
           </div>
         </div>
       </div>
