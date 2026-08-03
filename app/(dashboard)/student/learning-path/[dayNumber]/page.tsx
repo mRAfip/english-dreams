@@ -17,6 +17,10 @@ import type { Role } from "@/types/role";
 // Student > Learning path > one day — watch the class, download the notes,
 // complete the task. Content comes from the admin-authored tables; progress is
 // recorded per student.
+//
+// The day number in the URL is relative to THE STUDENT'S OWN COURSE, resolved
+// from their journey. A student never sees another course's day: the journey
+// only contains their course's days, so an out-of-range number 404s.
 export default async function Page(
   props: PageProps<"/student/learning-path/[dayNumber]">,
 ) {
@@ -27,6 +31,7 @@ export default async function Page(
   if (!Number.isInteger(n) || n < 1) notFound();
 
   const journey = await loadJourney();
+  if (!journey.course) notFound();
   const week = journey.weeks.find((w) =>
     w.days.some((d) => d.dayNumber === n),
   );
@@ -34,7 +39,7 @@ export default async function Page(
   if (!week || !day) notFound();
 
   // Serving URLs for whatever is published (public URL or presigned GET).
-  const content = await getDay(n);
+  const content = await getDay(journey.course.id, n);
   const configured = isR2Configured();
 
   // Merge the day's published video parts (with keys, from content) with the
@@ -73,8 +78,8 @@ export default async function Page(
 
   // Task: questions, the student's submission, and the review thread.
   const [questions, submission] = await Promise.all([
-    getTaskQuestions(n),
-    getSubmission(n, user.id),
+    getTaskQuestions(journey.course.id, n),
+    getSubmission(journey.course.id, n, user.id),
   ]);
   const comments = submission ? await getReviewComments(submission.id) : [];
 

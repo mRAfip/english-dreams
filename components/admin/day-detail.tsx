@@ -20,6 +20,7 @@ import type { TaskQuestion } from "@/types/task";
 import {
   TEACHING_DAYS_PER_WEEK,
   type ContentStatus,
+  type Course,
   type CurriculumDay,
   type CurriculumWeek,
 } from "@/types/content";
@@ -30,6 +31,7 @@ import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/content/status";
 // the serving URLs are resolved server-side and passed in.
 
 export function DayDetail({
+  course,
   day,
   week,
   videoUrls,
@@ -38,6 +40,7 @@ export function DayDetail({
   notesViewUrl,
   notesDownloadUrl,
 }: {
+  course: Course;
   day: CurriculumDay;
   week: CurriculumWeek;
   videoUrls: Record<string, string>;
@@ -49,11 +52,11 @@ export function DayDetail({
   return (
     <div className="mx-auto max-w-4xl">
       <Link
-        href="/admin/content-management"
+        href={`/admin/content-management/${course.slug}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-body transition-colors hover:text-ink"
       >
         <ArrowLeft className="size-4" />
-        All content
+        {course.title}
       </Link>
 
       {/* Everything for the day lives in one card: header, then the tabs. */}
@@ -84,6 +87,7 @@ export function DayDetail({
 
             <TabsContent value="videos" className="mt-5">
               <VideoPartsManager
+                courseSlug={course.slug}
                 dayNumber={day.dayNumber}
                 parts={day.videos}
                 videoUrls={videoUrls}
@@ -99,6 +103,7 @@ export function DayDetail({
             status={day.notes.status}
             action={
               <AssetUploadButton
+                courseSlug={course.slug}
                 dayNumber={day.dayNumber}
                 kind="notes"
                 label={day.notes.assetKey ? "Replace file" : "Upload file"}
@@ -143,7 +148,11 @@ export function DayDetail({
             </TabsContent>
 
             <TabsContent value="task" className="mt-5">
-              <TaskBuilder dayNumber={day.dayNumber} questions={questions} />
+              <TaskBuilder
+                courseSlug={course.slug}
+                dayNumber={day.dayNumber}
+                questions={questions}
+              />
             </TabsContent>
           </Tabs>
         </div>

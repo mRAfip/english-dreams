@@ -65,16 +65,16 @@ export function AdminOverview({
 }) {
   return (
     <div>
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Welcome back, {name}
           </h1>
-          <p className="text-sm text-body">{today()}</p>
+          <p className="truncate text-xs sm:text-sm text-body">{today()}</p>
         </div>
 
         {!data.isEmpty && (
-          <Button asChild className="self-start sm:self-auto">
+          <Button asChild className="shrink-0 h-9 sm:h-11 px-3 sm:px-6 text-xs sm:text-sm rounded-lg sm:rounded-xl">
             <Link href="/admin/students">
               <Plus />
               Add student
@@ -196,7 +196,7 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
     <>
       <section
         aria-label="Key numbers"
-        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="mt-6 grid gap-3 grid-cols-2 xl:grid-cols-4"
       >
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
@@ -208,7 +208,7 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
         <section aria-labelledby="attention-heading" className="lg:col-span-2">
           <h2
             id="attention-heading"
-            className="font-display text-xl font-extrabold text-ink"
+            className="font-display text-lg sm:text-xl font-extrabold text-ink"
           >
             Needs attention
           </h2>
@@ -241,12 +241,12 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
         <section aria-labelledby="trainers-heading">
           <h2
             id="trainers-heading"
-            className="font-display text-xl font-extrabold text-ink"
+            className="font-display text-lg sm:text-xl font-extrabold text-ink"
           >
             Trainer load
           </h2>
 
-          <div className="mt-4 rounded-xl border border-border bg-card p-6">
+          <div className="mt-4 rounded-xl border border-border bg-card p-4 sm:p-6">
             {data.trainers.length === 0 ? (
               <p className="text-sm text-mute">
                 No trainers yet.{" "}
@@ -259,17 +259,17 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
                 to start assigning students.
               </p>
             ) : (
-              <ul className="flex flex-col gap-4">
+              <ul className="flex flex-col gap-3.5">
                 {data.trainers.map((trainer) => (
-                  <li key={trainer.id} className="flex flex-col gap-1.5">
+                  <li key={trainer.id} className="flex flex-col gap-1">
                     <div className="flex items-baseline justify-between gap-3">
                       <Link
                         href={`/admin/trainers/${trainer.id}`}
-                        className="truncate text-sm font-semibold text-ink hover:underline"
+                        className="truncate text-xs sm:text-sm font-semibold text-ink hover:underline"
                       >
                         {trainer.name}
                       </Link>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">
+                      <span className="shrink-0 text-xs sm:text-sm font-semibold tabular-nums text-ink">
                         {trainer.students}
                       </span>
                     </div>
@@ -279,7 +279,7 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
                         style={{ width: `${(trainer.students / maxLoad) * 100}%` }}
                       />
                     </div>
-                    <div className="text-xs text-mute">
+                    <div className="text-[10px] sm:text-xs text-mute">
                       {trainer.students === 1
                         ? "1 student"
                         : `${trainer.students} students`}
@@ -299,30 +299,30 @@ function AttentionRow({ row }: { row: AttentionItem }) {
   const flag = REASON[row.reason];
   return (
     <TableRow>
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <Avatar>
+      <TableCell className="py-2.5 sm:py-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Avatar className="size-8 sm:size-9">
             {row.avatarUrl && <AvatarImage src={row.avatarUrl} alt="" />}
-            <AvatarFallback>{initials(row.name)}</AvatarFallback>
+            <AvatarFallback className="text-[10px] sm:text-xs">{initials(row.name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <Link
               href={`/admin/students/${row.id}`}
-              className="font-semibold text-ink hover:underline"
+              className="font-semibold text-ink hover:underline text-xs sm:text-sm truncate block"
             >
               {row.name}
             </Link>
-            <div className="truncate text-xs text-mute">{row.email}</div>
+            <div className="truncate text-[10px] sm:text-xs text-mute">{row.email}</div>
           </div>
         </div>
       </TableCell>
-      <TableCell>
-        <Badge variant={flag.variant}>
-          <flag.icon className="size-3.5" />
+      <TableCell className="py-2.5 sm:py-4">
+        <Badge variant={flag.variant} className="text-[10px] sm:text-xs py-0.5 px-2">
+          <flag.icon className="size-3 sm:size-3.5" />
           {flag.label}
         </Badge>
       </TableCell>
-      <TableCell className="hidden text-right text-mute md:table-cell">
+      <TableCell className="hidden text-right text-mute md:table-cell py-2.5 sm:py-4 text-xs sm:text-sm">
         {row.trainerName ?? "—"}
       </TableCell>
     </TableRow>
@@ -350,22 +350,22 @@ function StatCard({
   }[tone];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-sm text-body">{label}</span>
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-xs sm:text-sm text-body line-clamp-1">{label}</span>
         <span
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-full",
+            "flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-full",
             chip,
           )}
         >
-          <Icon className="size-4" />
+          <Icon className="size-3.5 sm:size-4" />
         </span>
       </div>
-      <div className="mt-3 font-display text-3xl font-extrabold tabular-nums text-ink">
+      <div className="mt-2.5 font-display text-xl sm:text-3xl font-extrabold tabular-nums text-ink leading-none">
         {value}
       </div>
-      <div className="mt-1 text-xs text-mute">{hint}</div>
+      <div className="mt-1.5 text-[10px] sm:text-xs text-mute line-clamp-1">{hint}</div>
     </div>
   );
 }

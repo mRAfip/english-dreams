@@ -4,12 +4,16 @@ import { TEACHING_DAYS_PER_WEEK } from "@/types/content";
 // R2 object-key layout. One place owns the folder structure so uploads,
 // deletes, and serving all agree on where a file lives.
 //
-//   content/week-03/day-12/video/<uuid>-<slug>.mp4
-//   content/week-03/day-12/notes/<uuid>-<slug>.pdf
+//   content/basic/week-03/day-12/video/<uuid>-<slug>.mp4
+//   content/basic/week-03/day-12/notes/<uuid>-<slug>.pdf
 //
-// Keys are grouped by week then day so the bucket browses like the curriculum,
-// and the leaf is uuid-prefixed so re-uploading the same filename never clobbers
-// a previous object (old objects are deleted explicitly on replace).
+// Keys are grouped by COURSE, then week, then day so the bucket browses like
+// the curriculum and two courses can both have a "day 12" without colliding.
+// The leaf is uuid-prefixed so re-uploading the same filename never clobbers a
+// previous object (old objects are deleted explicitly on replace).
+//
+// A course's slug never changes after creation (renaming a course edits its
+// title only), so keys stay valid for the life of the object.
 
 export type AssetKind = "video" | "notes";
 
@@ -38,17 +42,23 @@ export function weekNumberForDay(dayNumber: number): number {
   return Math.floor((dayNumber - 1) / TEACHING_DAYS_PER_WEEK) + 1;
 }
 
+/** The folder a day's files live in: content/<course>/week-NN/day-NN. */
+function dayPrefix(courseSlug: string, dayNumber: number): string {
+  const week = weekNumberForDay(dayNumber);
+  return `content/${courseSlug}/week-${pad(week)}/day-${pad(dayNumber)}`;
+}
+
 /**
- * Build the object key for a day's asset. `dayNumber` is the 1..60 teaching-day
- * number; the week folder is derived from it.
+ * Build the object key for a day's asset. `dayNumber` is the teaching-day
+ * number WITHIN its course; the week folder is derived from it.
  */
 export function buildAssetKey(
+  courseSlug: string,
   dayNumber: number,
   kind: AssetKind,
   fileName: string,
 ): string {
-  const week = weekNumberForDay(dayNumber);
-  return `content/week-${pad(week)}/day-${pad(dayNumber)}/${kind}/${randomUUID()}-${safeFileName(fileName)}`;
+  return `${dayPrefix(courseSlug, dayNumber)}/${kind}/${randomUUID()}-${safeFileName(fileName)}`;
 }
 
 /**
@@ -75,14 +85,14 @@ export function buildAvatarKey(userId: string, fileName: string): string {
 /**
  * Build the object key for a video part's thumbnail image.
  *
- *   content/week-03/day-12/thumbnails/<uuid>-<slug>.jpg
+ *   content/basic/week-03/day-12/thumbnails/<uuid>-<slug>.jpg
  */
 export function buildVideoThumbnailKey(
+  courseSlug: string,
   dayNumber: number,
   fileName: string,
 ): string {
-  const week = weekNumberForDay(dayNumber);
-  return `content/week-${pad(week)}/day-${pad(dayNumber)}/thumbnails/${randomUUID()}-${safeFileName(fileName)}`;
+  return `${dayPrefix(courseSlug, dayNumber)}/thumbnails/${randomUUID()}-${safeFileName(fileName)}`;
 }
 
 /**

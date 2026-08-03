@@ -17,11 +17,11 @@ export default async function Page() {
 
   return (
     <div>
-      <header className="flex flex-col gap-1.5 border-b border-border pb-6">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-col gap-0.5 border-b border-border pb-6">
+        <h1 className="font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
           Inbox
         </h1>
-        <p className="text-sm text-body">
+        <p className="text-xs sm:text-sm text-body">
           {entries.length} {entries.length === 1 ? "person" : "people"}
           {unread > 0 && ` · ${unread} unread`}
         </p>

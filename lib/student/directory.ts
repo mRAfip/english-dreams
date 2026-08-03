@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 // The student directory — every user holding the 'student' role, with the
-// trainer they're assigned to. Server-only.
+// trainer they're assigned to and the course they follow. Server-only.
 
 export type FeeStatus = "paid" | "unpaid" | "waived";
 
@@ -14,16 +14,44 @@ export type StudentRow = {
   joinedAtIso: string;
   trainerId: string | null;
   trainerName: string | null;
+  /** The course they follow. Null when the admin hasn't assigned one. */
+  courseId: string | null;
+  courseTitle: string | null;
   /** Admin's temporary access switch. A student with no access row defaults to true. */
   accessEnabled: boolean;
   feeStatus: FeeStatus;
 };
 
+type AccessInfo = {
+  accessEnabled: boolean;
+  feeStatus: FeeStatus;
+  courseId: string | null;
+  courseTitle: string | null;
+};
+
+type AccessRow = {
+  student_id: string;
+  access_enabled: boolean;
+  fee_status: FeeStatus;
+  course_id: string | null;
+  /** Supabase embeds a to-one join as an object or a one-element array. */
+  content_courses: { title: string } | { title: string }[] | null;
+};
+
+/** Take the single row out of a Supabase to-one embed. */
+function one<T>(v: T | T[] | null | undefined): T | null {
+  if (!v) return null;
+  return Array.isArray(v) ? (v[0] ?? null) : v;
+}
+
 // A student with no student_access row is treated as fully enabled — the table
-// is opt-in, so existing accounts are never locked out.
-const DEFAULT_ACCESS: { accessEnabled: boolean; feeStatus: FeeStatus } = {
+// is opt-in, so existing accounts are never locked out. They have no course
+// either, which the student screens render as a "not assigned yet" state.
+const DEFAULT_ACCESS: AccessInfo = {
   accessEnabled: true,
   feeStatus: "unpaid",
+  courseId: null,
+  courseTitle: null,
 };
 
 const MONTHS = [
@@ -73,22 +101,19 @@ export async function getStudents(): Promise<StudentRow[]> {
         .in("student_id", ids),
       supabase
         .from("student_access")
-        .select("student_id, access_enabled, fee_status")
+        .select(
+          "student_id, access_enabled, fee_status, course_id, content_courses(title)",
+        )
         .in("student_id", ids),
     ]);
 
-  const accessByStudent = new Map<
-    string,
-    { accessEnabled: boolean; feeStatus: FeeStatus }
-  >();
-  for (const a of (access ?? []) as {
-    student_id: string;
-    access_enabled: boolean;
-    fee_status: FeeStatus;
-  }[]) {
+  const accessByStudent = new Map<string, AccessInfo>();
+  for (const a of (access ?? []) as unknown as AccessRow[]) {
     accessByStudent.set(a.student_id, {
       accessEnabled: a.access_enabled,
       feeStatus: a.fee_status,
+      courseId: a.course_id,
+      courseTitle: one(a.content_courses)?.title ?? null,
     });
   }
 
@@ -135,6 +160,8 @@ export async function getStudents(): Promise<StudentRow[]> {
       joinedAtIso: p.created_at,
       trainerId,
       trainerName: trainerId ? (trainerName.get(trainerId) ?? null) : null,
+      courseId: acc.courseId,
+      courseTitle: acc.courseTitle,
       accessEnabled: acc.accessEnabled,
       feeStatus: acc.feeStatus,
     };
@@ -181,15 +208,12 @@ export async function getStudent(id: string): Promise<StudentRow | null> {
       .maybeSingle(),
     supabase
       .from("student_access")
-      .select("access_enabled, fee_status")
+      .select("access_enabled, fee_status, course_id, content_courses(title)")
       .eq("student_id", id)
       .maybeSingle(),
   ]);
   const trainerId = (link as { trainer_id: string | null } | null)?.trainer_id ?? null;
-  const acc = accessRow as {
-    access_enabled: boolean;
-    fee_status: FeeStatus;
-  } | null;
+  const acc = accessRow as unknown as Omit<AccessRow, "student_id"> | null;
 
   let trainerNameValue: string | null = null;
   if (trainerId) {
@@ -211,6 +235,8 @@ export async function getStudent(id: string): Promise<StudentRow | null> {
     joinedAtIso: p.created_at,
     trainerId,
     trainerName: trainerNameValue,
+    courseId: acc?.course_id ?? null,
+    courseTitle: acc ? (one(acc.content_courses)?.title ?? null) : null,
     accessEnabled: acc ? acc.access_enabled : DEFAULT_ACCESS.accessEnabled,
     feeStatus: acc ? acc.fee_status : DEFAULT_ACCESS.feeStatus,
   };

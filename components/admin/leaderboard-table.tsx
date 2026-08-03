@@ -38,16 +38,28 @@ import {
 // attempts (see lib/leaderboard/board.ts). This component only picks a week and
 // filters — no data generation.
 
+/**
+ * A board's tab id. Week numbers restart in every course, so "week 3" is
+ * ambiguous on its own — the course has to be part of the key or two courses'
+ * boards collide in the tab list.
+ */
+function boardKey(board: { courseId: string; weekNumber: number }): string {
+  return `${board.courseId}:${board.weekNumber}`;
+}
+
 export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
   const weeks = boards;
-  const [selected, setSelected] = React.useState(
-    () => weeks.at(-1)?.weekNumber ?? 0,
-  );
+  const [selected, setSelected] = React.useState(() => {
+    const last = weeks.at(-1);
+    return last ? boardKey(last) : "";
+  });
   const [query, setQuery] = React.useState("");
 
   const board =
-    weeks.find((b) => b.weekNumber === selected) ??
+    weeks.find((b) => boardKey(b) === selected) ??
     weeks.at(-1) ?? {
+      courseId: "",
+      courseTitle: "",
       weekNumber: 0,
       title: "",
       entries: [],
@@ -69,26 +81,26 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
 
   return (
     <div>
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Leaderboard
           </h1>
-          <p className="text-sm text-body">
-            Ranked on the week's two graded weekend papers — Saturday plus
-            Sunday, {WEEKLY_MAX_SCORE} marks in total. Only students who have sat
-            a paper this week are shown.
+          <p className="truncate text-xs sm:text-sm text-body">
+            {board.participants} {board.participants === 1 ? "student" : "students"} ranked
           </p>
         </div>
 
         {board.participants > 0 && (
-          <dl className="flex items-center gap-6">
-            <Stat label="Top score" value={`${stats.topScore}`} />
-            <Stat label="Average" value={`${stats.average}`} />
-            <Stat
-              label="Sat both papers"
-              value={`${stats.bothAttempted}/${board.participants}`}
-            />
+          <dl className="flex items-center gap-4 shrink-0">
+            <Stat label="Top" value={`${stats.topScore}`} />
+            <Stat label="Avg" value={`${stats.average}`} />
+            <div className="hidden sm:block">
+              <Stat
+                label="Completed"
+                value={`${stats.bothAttempted}/${board.participants}`}
+              />
+            </div>
           </dl>
         )}
       </header>
@@ -102,15 +114,15 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
       ) : (
         // One tab per week — only weeks whose quizzes are published appear.
         <Tabs
-          value={String(selected)}
-          onValueChange={(value) => setSelected(Number(value))}
+          value={selected}
+          onValueChange={setSelected}
           className="mt-6"
         >
           <DirectoryToolbar>
             <TabsList className="flex-wrap">
               {weeks.map((week) => (
-                <TabsTrigger key={week.weekNumber} value={String(week.weekNumber)}>
-                  Week {week.weekNumber}
+                <TabsTrigger key={boardKey(week)} value={boardKey(week)}>
+                  {week.courseTitle} · Week {week.weekNumber}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -127,12 +139,13 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
 
           {weeks.map((week) => (
             <TabsContent
-              key={week.weekNumber}
-              value={String(week.weekNumber)}
+              key={boardKey(week)}
+              value={boardKey(week)}
               className={TAB_PANEL_CLASS}
             >
               <p className="text-sm text-mute">
-                {board.title} · {board.participants} students ranked
+                {board.courseTitle} · {board.title} · {board.participants}{" "}
+                students ranked
                 {stats.noneAttempted > 0 && (
                   <> · {stats.noneAttempted} sat neither paper</>
                 )}
@@ -174,10 +187,10 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-right">
-      <dd className="font-display text-2xl font-extrabold tabular-nums text-ink">
+      <dd className="font-display text-lg sm:text-2xl font-extrabold tabular-nums text-ink leading-none">
         {value}
       </dd>
-      <dt className="text-xs text-mute">{label}</dt>
+      <dt className="text-[10px] sm:text-xs text-mute mt-1">{label}</dt>
     </div>
   );
 }

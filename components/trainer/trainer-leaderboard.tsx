@@ -46,20 +46,31 @@ import {
 // student_quiz_attempts tables (see lib/leaderboard/trainer-board). This
 // component only picks a week and filters.
 
+/**
+ * A board's tab id. A trainer's students can sit on different courses and week
+ * numbers restart in each, so the course has to be part of the key.
+ */
+function boardKey(board: { courseId: string; weekNumber: number }): string {
+  return `${board.courseId}:${board.weekNumber}`;
+}
+
 export function TrainerLeaderboard({
   boards,
 }: {
   boards: TrainerLeaderboardData[];
 }) {
   const weeks = boards;
-  const [selected, setSelected] = React.useState(
-    () => weeks.at(-1)?.weekNumber ?? 0,
-  );
+  const [selected, setSelected] = React.useState(() => {
+    const last = weeks.at(-1);
+    return last ? boardKey(last) : "";
+  });
   const [query, setQuery] = React.useState("");
 
   const board =
-    weeks.find((b) => b.weekNumber === selected) ??
+    weeks.find((b) => boardKey(b) === selected) ??
     weeks.at(-1) ?? {
+      courseId: "",
+      courseTitle: "",
       weekNumber: 0,
       title: "",
       entries: [],
@@ -120,15 +131,15 @@ export function TrainerLeaderboard({
       ) : (
         // One tab per week — only weeks whose quizzes are published appear.
         <Tabs
-          value={String(selected)}
-          onValueChange={(value) => setSelected(Number(value))}
+          value={selected}
+          onValueChange={setSelected}
           className="mt-6"
         >
           <DirectoryToolbar>
             <TabsList className="flex-wrap">
               {weeks.map((week) => (
-                <TabsTrigger key={week.weekNumber} value={String(week.weekNumber)}>
-                  Week {week.weekNumber}
+                <TabsTrigger key={boardKey(week)} value={boardKey(week)}>
+                  {week.courseTitle} · Week {week.weekNumber}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -145,12 +156,13 @@ export function TrainerLeaderboard({
 
           {weeks.map((week) => (
             <TabsContent
-              key={week.weekNumber}
-              value={String(week.weekNumber)}
+              key={boardKey(week)}
+              value={boardKey(week)}
               className={TAB_PANEL_CLASS}
             >
               <p className="text-sm text-mute">
-                {board.title} · {board.assigned} of your students ranked, out of{" "}
+                {board.courseTitle} · {board.title} · {board.assigned} of your
+                students ranked, out of{" "}
                 {board.cohortSize} across the programme
                 {stats.noneAttempted > 0 && (
                   <> · {stats.noneAttempted} sat neither paper</>

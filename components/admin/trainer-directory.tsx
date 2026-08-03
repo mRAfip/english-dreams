@@ -56,12 +56,12 @@ export function TrainerDirectory({ trainers }: { trainers: TrainerRow[] }) {
   return (
     <div>
       {/* Header */}
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Trainers
           </h1>
-          <p className="text-sm text-body">
+          <p className="truncate text-xs sm:text-sm text-body">
             {trainers.length} {trainers.length === 1 ? "trainer" : "trainers"}{" "}
             on the team
           </p>
@@ -69,7 +69,7 @@ export function TrainerDirectory({ trainers }: { trainers: TrainerRow[] }) {
 
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button className="self-start sm:self-auto">
+            <Button className="shrink-0 h-9 sm:h-11 px-3 sm:px-6 text-xs sm:text-sm rounded-lg sm:rounded-xl">
               <Plus />
               Add trainer
             </Button>

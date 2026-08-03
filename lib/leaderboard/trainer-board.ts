@@ -31,30 +31,36 @@ export async function loadTrainerLeaderboard(): Promise<TrainerLeaderboard[]> {
 
   const cohort = await loadAdminLeaderboard();
 
-  return cohort.map((board) => {
-    const mine = board.entries.filter((e) => assigned.has(e.studentId));
-    const cohortRankById = new Map(mine.map((e) => [e.studentId, e.rank]));
+  // A trainer's students can sit on different courses, so this keeps one board
+  // per course-week and drops the ones none of their students appear on.
+  return cohort
+    .map((board) => {
+      const mine = board.entries.filter((e) => assigned.has(e.studentId));
+      const cohortRankById = new Map(mine.map((e) => [e.studentId, e.rank]));
 
-    const entries: TrainerLeaderboardEntry[] = rankEntries(
-      mine.map(({ studentId, name, avatarUrl, isViewer, scores }) => ({
-        studentId,
-        name,
-        avatarUrl,
-        isViewer,
-        scores,
-      })),
-    ).map((entry) => ({
-      ...entry,
-      groupRank: entry.rank,
-      cohortRank: cohortRankById.get(entry.studentId) ?? entry.rank,
-    }));
+      const entries: TrainerLeaderboardEntry[] = rankEntries(
+        mine.map(({ studentId, name, avatarUrl, isViewer, scores }) => ({
+          studentId,
+          name,
+          avatarUrl,
+          isViewer,
+          scores,
+        })),
+      ).map((entry) => ({
+        ...entry,
+        groupRank: entry.rank,
+        cohortRank: cohortRankById.get(entry.studentId) ?? entry.rank,
+      }));
 
-    return {
-      weekNumber: board.weekNumber,
-      title: board.title,
-      entries,
-      assigned: entries.length,
-      cohortSize: board.participants,
-    };
-  });
+      return {
+        courseId: board.courseId,
+        courseTitle: board.courseTitle,
+        weekNumber: board.weekNumber,
+        title: board.title,
+        entries,
+        assigned: entries.length,
+        cohortSize: board.participants,
+      };
+    })
+    .filter((board) => board.entries.length > 0);
 }

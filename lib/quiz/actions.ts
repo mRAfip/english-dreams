@@ -38,13 +38,26 @@ async function currentUserId(): Promise<string> {
   return user.id;
 }
 
+/**
+ * The content_weeks.id for a week of a course. Week numbers repeat across
+ * courses, so the course slug from the admin URL is part of the lookup.
+ */
 async function weekIdFor(
   supabase: SupabaseClient,
+  courseSlug: string,
   weekNumber: number,
 ): Promise<string> {
+  const { data: course } = await supabase
+    .from("content_courses")
+    .select("id")
+    .eq("slug", courseSlug)
+    .maybeSingle();
+  if (!course) throw new Error(`Course "${courseSlug}" not found`);
+
   const { data } = await supabase
     .from("content_weeks")
     .select("id")
+    .eq("course_id", course.id)
     .eq("week_number", weekNumber)
     .maybeSingle();
   if (!data) throw new Error(`Week ${weekNumber} not found`);
@@ -61,6 +74,7 @@ async function weekIdFor(
  * questions reverts to "empty".
  */
 export async function saveQuiz(input: {
+  courseSlug: string;
   weekNumber: number;
   day: QuizDay;
   title: string;
@@ -68,7 +82,7 @@ export async function saveQuiz(input: {
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const weekId = await weekIdFor(supabase, input.weekNumber);
+  const weekId = await weekIdFor(supabase, input.courseSlug, input.weekNumber);
   const kind = KIND_FOR[input.day];
 
   const { data: existing } = await supabase
@@ -124,21 +138,22 @@ export async function saveQuiz(input: {
     if (insError) throw new Error(`Failed to save questions: ${insError.message}`);
   }
 
-  revalidatePath("/admin/content-management");
+  revalidatePath(`/admin/content-management/${input.courseSlug}`);
   revalidatePath(
-    `/admin/content-management/quiz/${input.weekNumber}/${input.day}`,
+    `/admin/content-management/${input.courseSlug}/quiz/${input.weekNumber}/${input.day}`,
   );
 }
 
 /** Publish / unpublish a weekend paper (only meaningful once it has questions). */
 export async function setQuizPublished(input: {
+  courseSlug: string;
   weekNumber: number;
   day: QuizDay;
   publish: boolean;
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const weekId = await weekIdFor(supabase, input.weekNumber);
+  const weekId = await weekIdFor(supabase, input.courseSlug, input.weekNumber);
 
   const { error } = await supabase
     .from("content_quizzes")
@@ -147,9 +162,9 @@ export async function setQuizPublished(input: {
     .eq("day", input.day);
   if (error) throw new Error(`Failed to update quiz: ${error.message}`);
 
-  revalidatePath("/admin/content-management");
+  revalidatePath(`/admin/content-management/${input.courseSlug}`);
   revalidatePath(
-    `/admin/content-management/quiz/${input.weekNumber}/${input.day}`,
+    `/admin/content-management/${input.courseSlug}/quiz/${input.weekNumber}/${input.day}`,
   );
 }
 

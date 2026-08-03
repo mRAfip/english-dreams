@@ -17,7 +17,6 @@ import {
   DAY_STATE,
   initials,
   TEACHING_DAYS_PER_WEEK,
-  TOTAL_DAYS,
   type AssignedStudent,
   type DayState,
 } from "@/lib/trainer/roster";
@@ -137,6 +136,7 @@ function RosterTable({
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <TableHead>Student</TableHead>
+          <TableHead className="hidden md:table-cell">Course</TableHead>
           <TableHead className="hidden sm:table-cell">Week &amp; day</TableHead>
           <TableHead className="hidden lg:table-cell">Progress</TableHead>
           <TableHead className="hidden md:table-cell">This week</TableHead>
@@ -172,11 +172,22 @@ function RosterTable({
                 </div>
               </TableCell>
 
-              {/* Where they are in the programme */}
+              {/* Which course they're on — a trainer's students can be spread
+                  across courses, so their week/day numbers are only readable
+                  next to the course they belong to. */}
+              <TableCell className="hidden md:table-cell">
+                {s.courseTitle ? (
+                  <span className="text-body">{s.courseTitle}</span>
+                ) : (
+                  <span className="text-mute">No course</span>
+                )}
+              </TableCell>
+
+              {/* Where they are in their course */}
               <TableCell className="hidden whitespace-nowrap sm:table-cell">
                 <div className="font-semibold text-ink">Week {s.week}</div>
                 <div className="text-xs text-mute">
-                  Day {s.daysCompleted} of {TOTAL_DAYS}
+                  Day {s.daysCompleted} of {s.totalDays}
                 </div>
               </TableCell>
 
@@ -184,9 +195,18 @@ function RosterTable({
               <TableCell className="hidden lg:table-cell">
                 <div className="flex w-36 flex-col gap-1.5">
                   <span className="text-xs font-semibold tabular-nums text-ink">
-                    {Math.round((s.daysCompleted / TOTAL_DAYS) * 100)}%
+                    {s.totalDays === 0
+                      ? 0
+                      : Math.round((s.daysCompleted / s.totalDays) * 100)}
+                    %
                   </span>
-                  <Meter percent={(s.daysCompleted / TOTAL_DAYS) * 100} />
+                  <Meter
+                    percent={
+                      s.totalDays === 0
+                        ? 0
+                        : (s.daysCompleted / s.totalDays) * 100
+                    }
+                  />
                 </div>
               </TableCell>
 

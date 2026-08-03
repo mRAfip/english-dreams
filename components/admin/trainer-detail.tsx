@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   GraduationCap,
+  KeyRound,
   Loader2,
   Mail,
   Pencil,
@@ -30,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { deleteTrainer, updateTrainer } from "@/lib/trainer/actions";
+import { UpdatePasswordDialog } from "@/components/admin/update-password-dialog";
 import type { TrainerDetail as TrainerDetailData } from "@/lib/trainer/directory";
 
 // Admin > Trainers > detail — a single trainer's profile with edit and delete.
@@ -39,6 +41,7 @@ import type { TrainerDetail as TrainerDetailData } from "@/lib/trainer/directory
 export function TrainerDetail({ trainer }: { trainer: TrainerDetailData }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = React.useState(false);
+  const [passwordOpen, setPasswordOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   return (
@@ -80,6 +83,20 @@ export function TrainerDetail({ trainer }: { trainer: TrainerDetailData }) {
                 setEditOpen(false);
                 router.refresh();
               }}
+            />
+          </Dialog>
+
+          <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+            <DialogTrigger asChild>
+              <Button variant="secondary">
+                <KeyRound className="size-4" />
+                Password
+              </Button>
+            </DialogTrigger>
+            <UpdatePasswordDialog
+              userId={trainer.id}
+              userName={trainer.name}
+              onDone={() => setPasswordOpen(false)}
             />
           </Dialog>
 

@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   TEACHING_DAYS_PER_WEEK,
   type ContentStatus,
+  type Course,
+  type CourseSummary,
   type CurriculumDay,
   type CurriculumWeek,
   type WeekendQuiz,
@@ -13,12 +15,13 @@ import type {
   QuizQuestion,
 } from "@/types/quiz";
 
-// Read the curriculum from Supabase and assemble it into the CurriculumWeek[]
-// shape the admin UI already renders. This replaces buildCurriculum() (the
-// in-memory scaffold) as the data source for /admin/content-management.
+// Read a course's curriculum from Supabase and assemble it into the
+// CurriculumWeek[] shape the admin UI renders.
 //
-// Day numbering is positional: a day's global 1..60 number is derived from its
-// week's order and its weekday, never stored (see 0006_content.sql).
+// Everything here is COURSE-SCOPED. Day numbering is positional within a
+// course: a day's number is derived from its week's order and its weekday,
+// never stored (see 0006_content.sql / 0021_courses.sql). Two courses both have
+// a "Day 12"; they are different days, so every lookup takes a course id.
 
 type AssetRow = {
   kind: "video" | "notes";
@@ -185,12 +188,119 @@ function mapWeek(row: WeekRow): CurriculumWeek {
   };
 }
 
-/** The full curriculum, ordered by week, assembled from the content tables. */
-export async function getCurriculum(): Promise<CurriculumWeek[]> {
+// ---------------------------------------------------------------------------
+// Courses
+// ---------------------------------------------------------------------------
+
+type CourseRow = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  level: string;
+  position: number;
+  status: ContentStatus;
+};
+
+const COURSE_SELECT = "id, slug, title, description, level, position, status";
+
+function mapCourse(row: CourseRow): Course {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    level: row.level,
+    position: row.position,
+    status: row.status,
+  };
+}
+
+/**
+ * Every course with its rollup — the admin's content landing screen. Week and
+ * student counts come from aggregate reads rather than loading each course's
+ * curriculum, so the list stays cheap however much content exists.
+ */
+export async function listCourses(): Promise<CourseSummary[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("content_courses")
+    .select(`${COURSE_SELECT}, content_weeks(count)`)
+    .order("position", { ascending: true });
+  if (error) throw new Error(`Failed to load courses: ${error.message}`);
+
+  const rows = (data ?? []) as (CourseRow & {
+    content_weeks: { count: number }[] | null;
+  })[];
+  if (rows.length === 0) return [];
+
+  // One pass over the assignments rather than a count per course.
+  const { data: assigned } = await supabase
+    .from("student_access")
+    .select("course_id")
+    .not("course_id", "is", null);
+  const studentsByCourse = new Map<string, number>();
+  for (const a of (assigned ?? []) as { course_id: string }[]) {
+    studentsByCourse.set(a.course_id, (studentsByCourse.get(a.course_id) ?? 0) + 1);
+  }
+
+  return rows.map((row) => {
+    const weekCount = row.content_weeks?.[0]?.count ?? 0;
+    return {
+      ...mapCourse(row),
+      weekCount,
+      dayCount: weekCount * TEACHING_DAYS_PER_WEEK,
+      studentCount: studentsByCourse.get(row.id) ?? 0,
+    };
+  });
+}
+
+/** Courses an admin can assign a student to, cheapest form. Ordered. */
+export async function listCourseOptions(): Promise<Course[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("content_courses")
+    .select(COURSE_SELECT)
+    .order("position", { ascending: true });
+  return ((data ?? []) as CourseRow[]).map(mapCourse);
+}
+
+/** One course by its URL slug, or null. */
+export async function getCourseBySlug(slug: string): Promise<Course | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("content_courses")
+    .select(COURSE_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+  return data ? mapCourse(data as CourseRow) : null;
+}
+
+/** One course by id, or null. */
+export async function getCourseById(id: string): Promise<Course | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("content_courses")
+    .select(COURSE_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  return data ? mapCourse(data as CourseRow) : null;
+}
+
+// ---------------------------------------------------------------------------
+// Curriculum (always within one course)
+// ---------------------------------------------------------------------------
+
+/** One course's weeks in order, assembled from the content tables. */
+export async function getCurriculum(
+  courseId: string,
+): Promise<CurriculumWeek[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("content_weeks")
     .select(WEEK_SELECT)
+    .eq("course_id", courseId)
     .order("week_number", { ascending: true });
 
   if (error) {
@@ -200,8 +310,13 @@ export async function getCurriculum(): Promise<CurriculumWeek[]> {
   return ((data ?? []) as WeekRow[]).map(mapWeek);
 }
 
-/** One teaching day (1..60) with the week it belongs to, or null if not found. */
+/**
+ * One teaching day of a course, with the week it belongs to. `dayNumber` is
+ * 1..N within that course, so the same number in another course is a different
+ * day. Null when the course has no such day.
+ */
 export async function getDay(
+  courseId: string,
   dayNumber: number,
 ): Promise<{ day: CurriculumDay; week: CurriculumWeek } | null> {
   const weekNumber =
@@ -211,6 +326,7 @@ export async function getDay(
   const { data, error } = await supabase
     .from("content_weeks")
     .select(WEEK_SELECT)
+    .eq("course_id", courseId)
     .eq("week_number", weekNumber)
     .maybeSingle();
 
@@ -232,14 +348,22 @@ const KIND_FOR: Record<QuizDay, QuizKind> = {
  * the week itself doesn't exist.
  */
 export async function getAdminQuiz(
+  course: Course,
   weekNumber: number,
   day: QuizDay,
 ): Promise<AdminQuiz | null> {
   const supabase = await createClient();
 
+  const courseFields = {
+    courseId: course.id,
+    courseSlug: course.slug,
+    courseTitle: course.title,
+  };
+
   const { data: week } = await supabase
     .from("content_weeks")
     .select("id")
+    .eq("course_id", course.id)
     .eq("week_number", weekNumber)
     .maybeSingle();
   if (!week) return null;
@@ -258,6 +382,7 @@ export async function getAdminQuiz(
   if (!quiz) {
     return {
       id: "",
+      ...courseFields,
       weekNumber,
       day,
       kind,
@@ -288,6 +413,7 @@ export async function getAdminQuiz(
 
   return {
     id: quiz.id as string,
+    ...courseFields,
     weekNumber,
     day,
     kind: (quiz.kind as QuizKind) ?? kind,

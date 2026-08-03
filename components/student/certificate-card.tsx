@@ -16,7 +16,6 @@ import {
   allDays,
   allQuizzes,
   quizAverage,
-  TOTAL_TEACHING_DAYS,
   type StudentJourney,
 } from "@/lib/student/progress";
 import type { IssuedCertificate } from "@/types/certificate";
@@ -56,11 +55,13 @@ export function CertificateView({
 
   const requirements: Requirement[] = [
     {
-      label: "Finish all 60 teaching days",
+      // The course decides the number — a certificate is completion of THIS
+      // course, not of a fixed 60-day programme.
+      label: `Finish all ${journey.totalDays} teaching days`,
       detail: "Watch the class and send the day's task",
       done: journey.daysCompleted,
-      total: TOTAL_TEACHING_DAYS,
-      met: journey.daysCompleted >= TOTAL_TEACHING_DAYS,
+      total: journey.totalDays,
+      met: journey.totalDays > 0 && journey.daysCompleted >= journey.totalDays,
     },
     {
       label: "Sit every weekend paper",
@@ -247,7 +248,7 @@ function CertificateCard({
             ? `Issued on ${certificate.issuedAt}. Signed by your trainer and the programme director.`
             : earned
               ? "You've done everything required — your trainer is preparing your certificate."
-              : `${TOTAL_TEACHING_DAYS - journey.daysCompleted} teaching days to go. Keep sending your tasks — your trainer signs this off.`}
+              : `${Math.max(0, journey.totalDays - journey.daysCompleted)} teaching days to go. Keep sending your tasks — your trainer signs this off.`}
         </p>
 
         <div className="flex shrink-0 gap-3">

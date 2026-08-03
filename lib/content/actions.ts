@@ -15,8 +15,17 @@ import { TEACHING_DAYS_PER_WEEK, type ContentStatus } from "@/types/content";
 // Server Actions backing /admin/content-management. Every action re-checks that
 // the caller is an admin — Server Actions are reachable by direct POST, so the
 // RLS policies are a backstop, not the only gate.
+//
+// Everything below the course level is COURSE-SCOPED: an action that touches a
+// week or a day takes the course it belongs to, because week numbers and day
+// numbers only identify a row once you know the course.
 
 const CONTENT_PATH = "/admin/content-management";
+
+/** The admin editor for one course. */
+function coursePath(slug: string): string {
+  return `${CONTENT_PATH}/${slug}`;
+}
 
 /** Throw unless the caller is a signed-in admin. Returns the admin's user. */
 async function assertAdmin() {
@@ -27,7 +36,7 @@ async function assertAdmin() {
   return user;
 }
 
-/** Resolve the week_number + intra-week weekday for a 1..60 day number. */
+/** Resolve the week_number + intra-week weekday for a day number. */
 function locate(dayNumber: number): { weekNumber: number; weekday: number } {
   return {
     weekNumber: Math.floor((dayNumber - 1) / TEACHING_DAYS_PER_WEEK) + 1,
@@ -35,24 +44,50 @@ function locate(dayNumber: number): { weekNumber: number; weekday: number } {
   };
 }
 
-/** The content_days.id for a teaching day, or throw if the row is missing. */
+/** A course's id from its slug, or throw. Slugs are what the admin URLs carry. */
+async function resolveCourseId(
+  supabase: SupabaseClient,
+  courseSlug: string,
+): Promise<string> {
+  const { data } = await supabase
+    .from("content_courses")
+    .select("id")
+    .eq("slug", courseSlug)
+    .maybeSingle();
+  if (!data) throw new Error(`Course "${courseSlug}" not found`);
+  return data.id as string;
+}
+
+/** The content_weeks.id for a week of a course, or throw. */
+async function resolveWeekId(
+  supabase: SupabaseClient,
+  courseSlug: string,
+  weekNumber: number,
+): Promise<string> {
+  const courseId = await resolveCourseId(supabase, courseSlug);
+  const { data } = await supabase
+    .from("content_weeks")
+    .select("id")
+    .eq("course_id", courseId)
+    .eq("week_number", weekNumber)
+    .maybeSingle();
+  if (!data) throw new Error(`Week ${weekNumber} not found`);
+  return data.id as string;
+}
+
+/** The content_days.id for a teaching day of a course, or throw. */
 async function resolveDayId(
   supabase: SupabaseClient,
+  courseSlug: string,
   dayNumber: number,
 ): Promise<string> {
   const { weekNumber, weekday } = locate(dayNumber);
-
-  const { data: week } = await supabase
-    .from("content_weeks")
-    .select("id")
-    .eq("week_number", weekNumber)
-    .maybeSingle();
-  if (!week) throw new Error(`Week ${weekNumber} not found`);
+  const weekId = await resolveWeekId(supabase, courseSlug, weekNumber);
 
   const { data: day } = await supabase
     .from("content_days")
     .select("id")
-    .eq("week_id", week.id)
+    .eq("week_id", weekId)
     .eq("weekday", weekday)
     .maybeSingle();
   if (!day) throw new Error(`Day ${dayNumber} not found`);
@@ -60,9 +95,10 @@ async function resolveDayId(
   return day.id as string;
 }
 
-function revalidateDay(dayNumber: number) {
+function revalidateDay(courseSlug: string, dayNumber: number) {
   revalidatePath(CONTENT_PATH);
-  revalidatePath(`${CONTENT_PATH}/${dayNumber}`);
+  revalidatePath(coursePath(courseSlug));
+  revalidatePath(`${coursePath(courseSlug)}/${dayNumber}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -81,12 +117,18 @@ export type UploadTicket = {
  * uploads the file directly to R2, then calls saveAsset() to record it.
  */
 export async function requestUploadUrl(input: {
+  courseSlug: string;
   dayNumber: number;
   kind: AssetKind;
   fileName: string;
 }): Promise<UploadTicket> {
   await assertAdmin();
-  const key = buildAssetKey(input.dayNumber, input.kind, input.fileName);
+  const key = buildAssetKey(
+    input.courseSlug,
+    input.dayNumber,
+    input.kind,
+    input.fileName,
+  );
   return { key, uploadUrl: getUploadUrl(key) };
 }
 
@@ -96,6 +138,7 @@ export async function requestUploadUrl(input: {
  * R2. New assets land as "draft" so an admin publishes deliberately.
  */
 export async function saveAsset(input: {
+  courseSlug: string;
   dayNumber: number;
   kind: AssetKind;
   key: string;
@@ -106,7 +149,7 @@ export async function saveAsset(input: {
 }): Promise<void> {
   const user = await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
 
   const { data: existing } = await supabase
     .from("content_assets")
@@ -137,17 +180,18 @@ export async function saveAsset(input: {
     await deleteObject(oldKey).catch(() => {});
   }
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Remove a day's asset of a kind, from both the DB and R2. */
 export async function deleteAsset(input: {
+  courseSlug: string;
   dayNumber: number;
   kind: AssetKind;
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
 
   const { data: row } = await supabase
     .from("content_assets")
@@ -165,18 +209,19 @@ export async function deleteAsset(input: {
   if (error) throw new Error(`Failed to delete asset: ${error.message}`);
 
   await deleteObject(row.r2_key as string).catch(() => {});
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Publish / unpublish a day's video or notes. */
 export async function setAssetStatus(input: {
+  courseSlug: string;
   dayNumber: number;
   kind: AssetKind;
   status: ContentStatus;
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
 
   const { error } = await supabase
     .from("content_assets")
@@ -185,7 +230,7 @@ export async function setAssetStatus(input: {
     .eq("kind", input.kind);
   if (error) throw new Error(`Failed to update status: ${error.message}`);
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /**
@@ -194,12 +239,13 @@ export async function setAssetStatus(input: {
  * empty slots stay "empty". Acts on saved content, so it runs immediately.
  */
 export async function setDayPublished(input: {
+  courseSlug: string;
   dayNumber: number;
   publish: boolean;
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
   const target: ContentStatus = input.publish ? "published" : "draft";
 
   // Task: only if a prompt has been written.
@@ -234,7 +280,7 @@ export async function setDayPublished(input: {
     throw new Error(`Failed to publish videos: ${videoError.message}`);
   }
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 // ---------------------------------------------------------------------------
@@ -252,11 +298,11 @@ type VideoPartInput = {
 
 /** Append a new video part to the end of a day's class (starts as draft). */
 export async function addVideoPart(
-  input: { dayNumber: number } & VideoPartInput,
+  input: { courseSlug: string; dayNumber: number } & VideoPartInput,
 ): Promise<void> {
   const user = await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
 
   const { data: last } = await supabase
     .from("content_day_videos")
@@ -280,12 +326,12 @@ export async function addVideoPart(
   });
   if (error) throw new Error(`Failed to add video part: ${error.message}`);
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Swap a part's file for a freshly uploaded one; the old object is removed. */
 export async function replaceVideoPart(
-  input: { dayNumber: number; id: string } & VideoPartInput,
+  input: { courseSlug: string; dayNumber: number; id: string } & VideoPartInput,
 ): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
@@ -311,11 +357,12 @@ export async function replaceVideoPart(
   const oldKey = (existing as { r2_key: string } | null)?.r2_key;
   if (oldKey && oldKey !== input.key) await deleteObject(oldKey).catch(() => {});
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Delete a video part, from both the DB and R2. */
 export async function deleteVideoPart(input: {
+  courseSlug: string;
   dayNumber: number;
   id: string;
 }): Promise<void> {
@@ -337,21 +384,27 @@ export async function deleteVideoPart(input: {
   const key = (row as { r2_key: string } | null)?.r2_key;
   if (key) await deleteObject(key).catch(() => {});
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Mint an R2 key + presigned PUT for a video part's thumbnail image. */
 export async function requestThumbnailUploadUrl(input: {
+  courseSlug: string;
   dayNumber: number;
   fileName: string;
 }): Promise<UploadTicket> {
   await assertAdmin();
-  const key = buildVideoThumbnailKey(input.dayNumber, input.fileName);
+  const key = buildVideoThumbnailKey(
+    input.courseSlug,
+    input.dayNumber,
+    input.fileName,
+  );
   return { key, uploadUrl: getUploadUrl(key) };
 }
 
 /** Attach (or replace) a part's thumbnail; the old image is removed from R2. */
 export async function setVideoPartThumbnail(input: {
+  courseSlug: string;
   dayNumber: number;
   id: string;
   key: string;
@@ -375,11 +428,12 @@ export async function setVideoPartThumbnail(input: {
     ?.thumbnail_key;
   if (oldKey && oldKey !== input.key) await deleteObject(oldKey).catch(() => {});
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Remove a part's thumbnail, from both the DB and R2. */
 export async function removeVideoPartThumbnail(input: {
+  courseSlug: string;
   dayNumber: number;
   id: string;
 }): Promise<void> {
@@ -401,11 +455,12 @@ export async function removeVideoPartThumbnail(input: {
   const key = (row as { thumbnail_key: string | null } | null)?.thumbnail_key;
   if (key) await deleteObject(key).catch(() => {});
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Set a part's title + description (the context students see). */
 export async function updateVideoPart(input: {
+  courseSlug: string;
   dayNumber: number;
   id: string;
   title: string;
@@ -422,11 +477,12 @@ export async function updateVideoPart(input: {
     .eq("id", input.id);
   if (error) throw new Error(`Failed to update video part: ${error.message}`);
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Publish / unpublish a single video part. */
 export async function setVideoPartStatus(input: {
+  courseSlug: string;
   dayNumber: number;
   id: string;
   status: ContentStatus;
@@ -439,18 +495,19 @@ export async function setVideoPartStatus(input: {
     .eq("id", input.id);
   if (error) throw new Error(`Failed to update video part: ${error.message}`);
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /** Reorder a part up or down, swapping positions with its neighbour. */
 export async function moveVideoPart(input: {
+  courseSlug: string;
   dayNumber: number;
   id: string;
   direction: "up" | "down";
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
 
   const { data } = await supabase
     .from("content_day_videos")
@@ -477,7 +534,7 @@ export async function moveVideoPart(input: {
     .update({ position: b.position })
     .eq("id", a.id);
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 // ---------------------------------------------------------------------------
@@ -485,6 +542,7 @@ export async function moveVideoPart(input: {
 // ---------------------------------------------------------------------------
 
 export async function saveDayTask(input: {
+  courseSlug: string;
   dayNumber: number;
   title: string;
   prompt: string;
@@ -492,7 +550,7 @@ export async function saveDayTask(input: {
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, input.dayNumber);
+  const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
 
   const prompt = input.prompt.trim();
   const status: ContentStatus =
@@ -508,7 +566,7 @@ export async function saveDayTask(input: {
     .eq("id", dayId);
   if (error) throw new Error(`Failed to save task: ${error.message}`);
 
-  revalidateDay(input.dayNumber);
+  revalidateDay(input.courseSlug, input.dayNumber);
 }
 
 /**
@@ -517,6 +575,7 @@ export async function saveDayTask(input: {
  * edits are flushed deliberately rather than on every keystroke.
  */
 export async function saveWeekEdits(input: {
+  courseSlug: string;
   weekNumber: number;
   week?: { title: string; focus: string };
   days: { dayNumber: number; taskTitle: string; taskPrompt: string }[];
@@ -534,12 +593,7 @@ export async function saveWeekEdits(input: {
   const user = await assertAdmin();
   const supabase = await createClient();
 
-  const { data: week } = await supabase
-    .from("content_weeks")
-    .select("id")
-    .eq("week_number", input.weekNumber)
-    .maybeSingle();
-  if (!week) throw new Error(`Week ${input.weekNumber} not found`);
+  const weekId = await resolveWeekId(supabase, input.courseSlug, input.weekNumber);
 
   if (input.week) {
     const { error } = await supabase
@@ -548,7 +602,7 @@ export async function saveWeekEdits(input: {
         title: input.week.title.trim(),
         focus: input.week.focus.trim(),
       })
-      .eq("id", week.id);
+      .eq("id", weekId);
     if (error) throw new Error(`Failed to save week: ${error.message}`);
   }
 
@@ -557,7 +611,7 @@ export async function saveWeekEdits(input: {
     const { data: rows } = await supabase
       .from("content_days")
       .select("id, weekday")
-      .eq("week_id", week.id);
+      .eq("week_id", weekId);
     const idByWeekday = new Map<number, string>();
     for (const r of (rows ?? []) as { id: string; weekday: number }[]) {
       idByWeekday.set(r.weekday, r.id);
@@ -585,7 +639,7 @@ export async function saveWeekEdits(input: {
   if (input.assets && input.assets.length > 0) {
     const replacedKeys: string[] = [];
     for (const a of input.assets) {
-      const dayId = await resolveDayId(supabase, a.dayNumber);
+      const dayId = await resolveDayId(supabase, input.courseSlug, a.dayNumber);
 
       const { data: existing } = await supabase
         .from("content_assets")
@@ -618,24 +672,28 @@ export async function saveWeekEdits(input: {
     await Promise.all(replacedKeys.map((k) => deleteObject(k).catch(() => {})));
   }
 
-  revalidatePath(CONTENT_PATH);
+  revalidatePath(coursePath(input.courseSlug));
 }
 
 // ---------------------------------------------------------------------------
-// Weeks
+// Weeks — always within one course. Week numbers are 1..N per course, so every
+// lookup and every renumber is filtered by course_id.
 // ---------------------------------------------------------------------------
 
-/** Append a new week (with 5 empty days) to the end of the programme. */
+/** Append a new week (with 5 empty days) to the end of a course. */
 export async function createWeek(
+  courseSlug: string,
   title: string,
   focus: string,
 ): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
+  const courseId = await resolveCourseId(supabase, courseSlug);
 
   const { data: last } = await supabase
     .from("content_weeks")
     .select("week_number")
+    .eq("course_id", courseId)
     .order("week_number", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -643,7 +701,12 @@ export async function createWeek(
 
   const { data: week, error } = await supabase
     .from("content_weeks")
-    .insert({ week_number: nextNumber, title: title.trim(), focus: focus.trim() })
+    .insert({
+      course_id: courseId,
+      week_number: nextNumber,
+      title: title.trim(),
+      focus: focus.trim(),
+    })
     .select("id")
     .single();
   if (error || !week) {
@@ -661,47 +724,53 @@ export async function createWeek(
   if (daysError) throw new Error(`Failed to create days: ${daysError.message}`);
 
   revalidatePath(CONTENT_PATH);
+  revalidatePath(coursePath(courseSlug));
 }
 
 export async function updateWeek(input: {
+  courseSlug: string;
   weekNumber: number;
   title: string;
   focus: string;
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
+  const weekId = await resolveWeekId(supabase, input.courseSlug, input.weekNumber);
 
   const { error } = await supabase
     .from("content_weeks")
     .update({ title: input.title.trim(), focus: input.focus.trim() })
-    .eq("week_number", input.weekNumber);
+    .eq("id", weekId);
   if (error) throw new Error(`Failed to update week: ${error.message}`);
 
-  revalidatePath(CONTENT_PATH);
+  revalidatePath(coursePath(input.courseSlug));
 }
 
 /**
- * Remove a week: delete its R2 objects, drop the row (days + assets cascade),
- * then pull every later week down by one so numbering stays 1..N contiguous.
+ * Remove a week from a course: delete its R2 objects, drop the row (days +
+ * assets cascade), then pull every later week of THAT COURSE down by one so its
+ * numbering stays 1..N contiguous. Other courses are untouched.
  */
-export async function removeWeek(weekNumber: number): Promise<void> {
+export async function removeWeek(
+  courseSlug: string,
+  weekNumber: number,
+): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
+  const courseId = await resolveCourseId(supabase, courseSlug);
 
   const { data: week } = await supabase
     .from("content_weeks")
-    .select("id, content_days(content_assets(r2_key))")
+    .select("id, content_days(content_assets(r2_key), content_day_videos(r2_key, thumbnail_key))")
+    .eq("course_id", courseId)
     .eq("week_number", weekNumber)
     .maybeSingle();
   if (!week) return;
 
   // Collect object keys before the cascade delete removes the rows.
-  const keys: string[] = [];
-  for (const day of (week.content_days ?? []) as {
-    content_assets: { r2_key: string }[] | null;
-  }[]) {
-    for (const asset of day.content_assets ?? []) keys.push(asset.r2_key);
-  }
+  const keys = collectDayKeys(
+    (week.content_days ?? []) as DayAssetRows[],
+  );
 
   const { error } = await supabase
     .from("content_weeks")
@@ -709,10 +778,11 @@ export async function removeWeek(weekNumber: number): Promise<void> {
     .eq("id", week.id);
   if (error) throw new Error(`Failed to remove week: ${error.message}`);
 
-  // Renumber later weeks ascending so each new number is already free.
+  // Renumber this course's later weeks ascending so each new number is free.
   const { data: later } = await supabase
     .from("content_weeks")
     .select("id, week_number")
+    .eq("course_id", courseId)
     .gt("week_number", weekNumber)
     .order("week_number", { ascending: true });
   for (const w of (later ?? []) as { id: string; week_number: number }[]) {
@@ -726,4 +796,192 @@ export async function removeWeek(weekNumber: number): Promise<void> {
   await Promise.all(keys.map((k) => deleteObject(k).catch(() => {})));
 
   revalidatePath(CONTENT_PATH);
+  revalidatePath(coursePath(courseSlug));
+}
+
+// ---------------------------------------------------------------------------
+// Courses — the new top level. An admin creates the course first, then authors
+// its weeks exactly as before.
+// ---------------------------------------------------------------------------
+
+type DayAssetRows = {
+  content_assets: { r2_key: string }[] | null;
+  content_day_videos: { r2_key: string; thumbnail_key: string | null }[] | null;
+};
+
+/** Every R2 key hanging off a set of days — notes, video parts, thumbnails. */
+function collectDayKeys(days: DayAssetRows[]): string[] {
+  const keys: string[] = [];
+  for (const day of days) {
+    for (const asset of day.content_assets ?? []) keys.push(asset.r2_key);
+    for (const video of day.content_day_videos ?? []) {
+      keys.push(video.r2_key);
+      if (video.thumbnail_key) keys.push(video.thumbnail_key);
+    }
+  }
+  return keys;
+}
+
+/** "Basic Course 2" -> "basic-course-2". Matches the DB's slug check. */
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+export type CourseResult = { ok: true; slug: string } | { ok: false; error: string };
+
+/**
+ * Create a course. The slug is derived from the title and must be unique — a
+ * collision is reported back to the form rather than thrown, since "you already
+ * have a course called that" is a normal thing for an admin to hit.
+ */
+export async function createCourse(input: {
+  title: string;
+  description: string;
+  level: string;
+}): Promise<CourseResult> {
+  await assertAdmin();
+  const supabase = await createClient();
+
+  const title = input.title.trim();
+  if (!title) return { ok: false, error: "Course name is required." };
+
+  const slug = slugify(title);
+  if (!slug) {
+    return { ok: false, error: "Course name must contain letters or numbers." };
+  }
+
+  const { data: clash } = await supabase
+    .from("content_courses")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (clash) return { ok: false, error: "A course with that name already exists." };
+
+  const { data: last } = await supabase
+    .from("content_courses")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error } = await supabase.from("content_courses").insert({
+    slug,
+    title,
+    description: input.description.trim(),
+    level: input.level.trim(),
+    position: ((last?.position as number | undefined) ?? 0) + 1,
+    status: "draft" as ContentStatus,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(CONTENT_PATH);
+  return { ok: true, slug };
+}
+
+/**
+ * Rename / re-describe a course. The SLUG IS NOT REGENERATED: it is in URLs the
+ * admin may have bookmarked and in every R2 key already uploaded under it, so a
+ * rename changes the label only.
+ */
+export async function updateCourse(input: {
+  slug: string;
+  title: string;
+  description: string;
+  level: string;
+}): Promise<CourseResult> {
+  await assertAdmin();
+  const supabase = await createClient();
+
+  const title = input.title.trim();
+  if (!title) return { ok: false, error: "Course name is required." };
+
+  const { error } = await supabase
+    .from("content_courses")
+    .update({
+      title,
+      description: input.description.trim(),
+      level: input.level.trim(),
+    })
+    .eq("slug", input.slug);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(CONTENT_PATH);
+  revalidatePath(coursePath(input.slug));
+  return { ok: true, slug: input.slug };
+}
+
+/**
+ * Publish / unpublish a course. Unpublishing hides it from the assignment
+ * dropdown for new students; students already on it keep their content, since
+ * pulling a course out from under a mid-programme student would be worse than
+ * leaving it visible.
+ */
+export async function setCourseStatus(input: {
+  slug: string;
+  status: ContentStatus;
+}): Promise<void> {
+  await assertAdmin();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("content_courses")
+    .update({ status: input.status })
+    .eq("slug", input.slug);
+  if (error) throw new Error(`Failed to update course: ${error.message}`);
+
+  revalidatePath(CONTENT_PATH);
+  revalidatePath(coursePath(input.slug));
+}
+
+/**
+ * Delete a course and everything under it. The DB cascade removes weeks, days,
+ * assets, quizzes, submissions and progress; students on the course are
+ * unassigned (`on delete set null`) rather than deleted.
+ *
+ * Refused while students are still assigned — an admin should move them first,
+ * because this destroys their progress. That check is deliberate friction, not
+ * a technical limit.
+ */
+export async function deleteCourse(slug: string): Promise<CourseResult> {
+  await assertAdmin();
+  const supabase = await createClient();
+
+  const { data: course } = await supabase
+    .from("content_courses")
+    .select("id, content_weeks(content_days(content_assets(r2_key), content_day_videos(r2_key, thumbnail_key)))")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!course) return { ok: false, error: "Course not found." };
+
+  const { count } = await supabase
+    .from("student_access")
+    .select("student_id", { count: "exact", head: true })
+    .eq("course_id", course.id);
+  if ((count ?? 0) > 0) {
+    return {
+      ok: false,
+      error: `${count} student${count === 1 ? " is" : "s are"} still assigned to this course. Move them to another course first.`,
+    };
+  }
+
+  // Collect object keys before the cascade delete removes the rows.
+  const weeks = (course.content_weeks ?? []) as {
+    content_days: DayAssetRows[] | null;
+  }[];
+  const keys = collectDayKeys(weeks.flatMap((w) => w.content_days ?? []));
+
+  const { error } = await supabase
+    .from("content_courses")
+    .delete()
+    .eq("id", course.id);
+  if (error) return { ok: false, error: error.message };
+
+  await Promise.all(keys.map((k) => deleteObject(k).catch(() => {})));
+
+  revalidatePath(CONTENT_PATH);
+  return { ok: true, slug };
 }

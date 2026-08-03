@@ -60,8 +60,9 @@ function probeDurationMin(file: File): Promise<number | null> {
 }
 
 /** Upload a video file to R2, returning its key + probed duration. */
-async function uploadVideo(dayNumber: number, file: File) {
+async function uploadVideo(courseSlug: string, dayNumber: number, file: File) {
   const { key, uploadUrl } = await requestUploadUrl({
+    courseSlug,
     dayNumber,
     kind: "video",
     fileName: file.name,
@@ -77,11 +78,13 @@ async function uploadVideo(dayNumber: number, file: File) {
 }
 
 export function VideoPartsManager({
+  courseSlug,
   dayNumber,
   parts,
   videoUrls,
   thumbnailUrls,
 }: {
+  courseSlug: string;
   dayNumber: number;
   parts: VideoPart[];
   videoUrls: Record<string, string>;
@@ -99,7 +102,7 @@ export function VideoPartsManager({
             </div>
           </div>
         </div>
-        <AddPartButton dayNumber={dayNumber} />
+        <AddPartButton courseSlug={courseSlug} dayNumber={dayNumber} />
       </div>
 
       <div className="flex flex-col gap-3 p-4">
@@ -114,6 +117,7 @@ export function VideoPartsManager({
               part={part}
               index={i}
               total={parts.length}
+              courseSlug={courseSlug}
               dayNumber={dayNumber}
               url={videoUrls[part.id] ?? null}
               thumbnailUrl={thumbnailUrls[part.id] ?? null}
@@ -125,7 +129,13 @@ export function VideoPartsManager({
   );
 }
 
-function AddPartButton({ dayNumber }: { dayNumber: number }) {
+function AddPartButton({
+  courseSlug,
+  dayNumber,
+}: {
+  courseSlug: string;
+  dayNumber: number;
+}) {
   const router = useRouter();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [busy, setBusy] = React.useState(false);
@@ -136,8 +146,9 @@ function AddPartButton({ dayNumber }: { dayNumber: number }) {
     if (!file) return;
     setBusy(true);
     try {
-      const { key, durationMin } = await uploadVideo(dayNumber, file);
+      const { key, durationMin } = await uploadVideo(courseSlug, dayNumber, file);
       await addVideoPart({
+        courseSlug,
         dayNumber,
         key,
         fileName: file.name,
@@ -184,6 +195,7 @@ function PartRow({
   part,
   index,
   total,
+  courseSlug,
   dayNumber,
   url,
   thumbnailUrl,
@@ -191,6 +203,7 @@ function PartRow({
   part: VideoPart;
   index: number;
   total: number;
+  courseSlug: string;
   dayNumber: number;
   url: string | null;
   thumbnailUrl: string | null;
@@ -223,8 +236,9 @@ function PartRow({
     event.target.value = "";
     if (!file) return;
     await run("Couldn't replace video", async () => {
-      const { key, durationMin } = await uploadVideo(dayNumber, file);
+      const { key, durationMin } = await uploadVideo(courseSlug, dayNumber, file);
       await replaceVideoPart({
+        courseSlug,
         dayNumber,
         id: part.id,
         key,
@@ -243,6 +257,7 @@ function PartRow({
     if (!file) return;
     await run("Couldn't set thumbnail", async () => {
       const { key, uploadUrl } = await requestThumbnailUploadUrl({
+        courseSlug,
         dayNumber,
         fileName: file.name,
       });
@@ -252,7 +267,7 @@ function PartRow({
         headers: file.type ? { "Content-Type": file.type } : undefined,
       });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-      await setVideoPartThumbnail({ dayNumber, id: part.id, key });
+      await setVideoPartThumbnail({ courseSlug, dayNumber, id: part.id, key });
       toast.success("Thumbnail set");
     });
   }
@@ -296,7 +311,7 @@ function PartRow({
               disabled={busy || index === 0}
               onClick={() =>
                 run("Couldn't reorder", () =>
-                  moveVideoPart({ dayNumber, id: part.id, direction: "up" }),
+                  moveVideoPart({ courseSlug, dayNumber, id: part.id, direction: "up" }),
                 )
               }
               aria-label="Move up"
@@ -309,7 +324,7 @@ function PartRow({
               disabled={busy || index === total - 1}
               onClick={() =>
                 run("Couldn't reorder", () =>
-                  moveVideoPart({ dayNumber, id: part.id, direction: "down" }),
+                  moveVideoPart({ courseSlug, dayNumber, id: part.id, direction: "down" }),
                 )
               }
               aria-label="Move down"
@@ -323,6 +338,7 @@ function PartRow({
               onClick={() =>
                 run("Couldn't update", () =>
                   setVideoPartStatus({
+                    courseSlug,
                     dayNumber,
                     id: part.id,
                     status: published ? "draft" : "published",
@@ -357,7 +373,7 @@ function PartRow({
               className="text-destructive hover:text-destructive"
               onClick={() =>
                 run("Couldn't delete", async () => {
-                  await deleteVideoPart({ dayNumber, id: part.id });
+                  await deleteVideoPart({ courseSlug, dayNumber, id: part.id });
                   toast.success("Video part removed");
                 })
               }
@@ -438,7 +454,7 @@ function PartRow({
                 className="text-destructive hover:text-destructive"
                 onClick={() =>
                   run("Couldn't remove thumbnail", async () => {
-                    await removeVideoPartThumbnail({ dayNumber, id: part.id });
+                    await removeVideoPartThumbnail({ courseSlug, dayNumber, id: part.id });
                     toast.success("Thumbnail removed");
                   })
                 }
@@ -458,6 +474,7 @@ function PartRow({
             onClick={() =>
               run("Couldn't save details", async () => {
                 await updateVideoPart({
+                  courseSlug,
                   dayNumber,
                   id: part.id,
                   title,

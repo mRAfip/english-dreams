@@ -4,11 +4,18 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { courseIdForStudent } from "@/lib/student/course";
 import { TEACHING_DAYS_PER_WEEK } from "@/types/content";
 
 // Server Actions a student calls as they move through a day: mark the class
 // watched, the notes downloaded, the task done. Each upserts the student's own
 // row in student_day_progress (RLS guarantees they can only touch their own).
+//
+// A day number is only meaningful inside a course, and these actions are called
+// from the client with a plain number — so every one of them resolves the
+// caller's OWN course server-side and looks the day up inside it. A student can
+// therefore never record progress against another course's day, whatever they
+// post.
 
 /** Signed-in user id, or throw. Any authenticated user tracks their own row. */
 async function currentUserId(): Promise<string> {
@@ -17,17 +24,22 @@ async function currentUserId(): Promise<string> {
   return user.id;
 }
 
-/** Resolve the content_days.id for a 1..N teaching-day number. */
+/** The content_days.id for a teaching day of the student's own course. */
 async function resolveDayId(
   supabase: SupabaseClient,
+  userId: string,
   dayNumber: number,
 ): Promise<string> {
+  const courseId = await courseIdForStudent(userId);
+  if (!courseId) throw new Error("No course assigned");
+
   const weekNumber = Math.floor((dayNumber - 1) / TEACHING_DAYS_PER_WEEK) + 1;
   const weekday = ((dayNumber - 1) % TEACHING_DAYS_PER_WEEK) + 1;
 
   const { data: week } = await supabase
     .from("content_weeks")
     .select("id")
+    .eq("course_id", courseId)
     .eq("week_number", weekNumber)
     .maybeSingle();
   if (!week) throw new Error(`Week ${weekNumber} not found`);
@@ -54,7 +66,7 @@ async function setFlag(
 ): Promise<void> {
   const userId = await currentUserId();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, dayNumber);
+  const dayId = await resolveDayId(supabase, userId, dayNumber);
 
   const { error } = await supabase
     .from("student_day_progress")
@@ -87,7 +99,7 @@ export async function markVideoPartWatched(
 ): Promise<void> {
   const userId = await currentUserId();
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, dayNumber);
+  const dayId = await resolveDayId(supabase, userId, dayNumber);
 
   const { data: existing } = await supabase
     .from("student_day_progress")

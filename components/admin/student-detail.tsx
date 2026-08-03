@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CreditCard,
+  KeyRound,
+  LibraryBig,
   Loader2,
   Mail,
   Pencil,
@@ -35,6 +37,7 @@ import {
   setStudentAccess,
   updateStudent,
 } from "@/lib/student/manage";
+import { UpdatePasswordDialog } from "@/components/admin/update-password-dialog";
 import type { FeeStatus, StudentRow } from "@/lib/student/directory";
 
 // Admin > Students > detail — a single student's profile with edit and delete.
@@ -42,16 +45,21 @@ import type { FeeStatus, StudentRow } from "@/lib/student/directory";
 // a router refresh (edit) or a redirect back to the roster (delete).
 
 type TrainerOption = { id: string; name: string };
+/** A course an admin can move the student to. */
+type CourseOption = { id: string; title: string };
 
 export function StudentDetail({
   student,
   trainers,
+  courses,
 }: {
   student: StudentRow;
   trainers: TrainerOption[];
+  courses: CourseOption[];
 }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = React.useState(false);
+  const [passwordOpen, setPasswordOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
 
   return (
@@ -90,10 +98,25 @@ export function StudentDetail({
             <EditStudentDialog
               student={student}
               trainers={trainers}
+              courses={courses}
               onDone={() => {
                 setEditOpen(false);
                 router.refresh();
               }}
+            />
+          </Dialog>
+
+          <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+            <DialogTrigger asChild>
+              <Button variant="secondary">
+                <KeyRound className="size-4" />
+                Password
+              </Button>
+            </DialogTrigger>
+            <UpdatePasswordDialog
+              userId={student.id}
+              userName={student.name}
+              onDone={() => setPasswordOpen(false)}
             />
           </Dialog>
 
@@ -120,6 +143,13 @@ export function StudentDetail({
       <section className="mt-6" aria-label="Profile">
         <h2 className="text-sm font-semibold text-ink">Profile</h2>
         <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+          <DetailField icon={LibraryBig} label="Course">
+            {student.courseTitle ? (
+              student.courseTitle
+            ) : (
+              <span className="text-mute">Not assigned</span>
+            )}
+          </DetailField>
           <DetailField icon={UserRound} label="Trainer">
             {student.trainerName ? (
               student.trainerName
@@ -330,10 +360,12 @@ function DetailField({
 function EditStudentDialog({
   student,
   trainers,
+  courses,
   onDone,
 }: {
   student: StudentRow;
   trainers: TrainerOption[];
+  courses: CourseOption[];
   onDone: () => void;
 }) {
   const [pending, setPending] = React.useState(false);
@@ -346,6 +378,7 @@ function EditStudentDialog({
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
     const trainerId = String(form.get("trainerId") ?? "");
+    const courseId = String(form.get("courseId") ?? "");
     if (!name || !email) return;
 
     setPending(true);
@@ -357,6 +390,7 @@ function EditStudentDialog({
         email,
         password: password || undefined,
         trainerId: trainerId || null,
+        courseId: courseId || null,
       });
       if (result.ok) {
         onDone();
@@ -409,6 +443,28 @@ function EditStudentDialog({
             minLength={6}
             placeholder="Leave blank to keep current"
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="edit-student-course">Course</Label>
+          <select
+            id="edit-student-course"
+            name="courseId"
+            defaultValue={student.courseId ?? ""}
+            className="h-11 w-full rounded-md border border-input bg-card px-4 text-sm text-foreground shadow-sm transition-colors focus-visible:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <option value="">Not assigned</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+          {/* Moving a student restarts them at day 1 of the new course. Their
+              old progress is kept, not deleted, so moving them back restores it. */}
+          <p className="text-xs text-mute">
+            Moving them to another course starts them at day 1 of it. Progress
+            on their current course is kept, not deleted.
+          </p>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="edit-student-trainer">Trainer</Label>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
+  ChevronLeft,
   ClipboardList,
   Eye,
   FileText,
@@ -53,12 +54,17 @@ import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/content/status";
 import {
   QUIZZES_PER_WEEK,
   TEACHING_DAYS_PER_WEEK,
+  type Course,
   type CurriculumDay,
   type CurriculumWeek,
   type WeekendQuiz,
 } from "@/types/content";
 
-// Admin > Content — author the 12-week / 60-day programme, backed by Supabase.
+// Admin > Content > one course — author its weeks and days, backed by Supabase.
+//
+// Everything on this screen belongs to ONE course: the week rail, the day cards,
+// the quizzes, and every Server Action called from here carries `course.slug`.
+// A course is as long as it has been authored — there is no fixed 60 days.
 //
 // Editing model: text edits (a week's title/focus and each day's daily task) are
 // STAGED locally and flushed to the backend in a single batched request via the
@@ -91,7 +97,13 @@ function probeDurationMin(file: File): Promise<number | null> {
   });
 }
 
-export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
+export function ContentManager({
+  course,
+  weeks,
+}: {
+  course: Course;
+  weeks: CurriculumWeek[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [selected, setSelected] = React.useState(1);
@@ -158,6 +170,7 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
     }[] = [];
     for (const s of staged) {
       const { key, uploadUrl } = await requestUploadUrl({
+        courseSlug: course.slug,
         dayNumber: s.dayNumber,
         kind: s.kind,
         fileName: s.file.name,
@@ -185,6 +198,7 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
 
     // 2. One batched write: week meta + tasks + asset rows.
     await saveWeekEdits({
+      courseSlug: course.slug,
       weekNumber: week.weekNumber,
       week: weekEdit ?? undefined,
       days: [],
@@ -215,7 +229,7 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
   /** Publish / unpublish a whole day (saved content only). */
   function togglePublish(dayNumber: number, publish: boolean) {
     startTransition(async () => {
-      await setDayPublished({ dayNumber, publish });
+      await setDayPublished({ courseSlug: course.slug, dayNumber, publish });
       router.refresh();
     });
   }
@@ -223,14 +237,14 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
   // Structural mutations (immediate — they change numbering, not staged text).
   function doAddWeek(title: string, focus: string) {
     startTransition(async () => {
-      await createWeek(title, focus);
+      await createWeek(course.slug, title, focus);
       router.refresh();
       setSelected(weeks.length + 1);
     });
   }
   function doRemoveWeek() {
     startTransition(async () => {
-      await removeWeek(week.weekNumber);
+      await removeWeek(course.slug, week.weekNumber);
       router.refresh();
     });
     setConfirmRemove(false);
@@ -242,29 +256,37 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
   return (
     <div className={dirty ? "pb-24" : undefined}>
       {/* Header */}
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-            Content
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <Link
+            href="/admin/content-management"
+            className="flex items-center gap-1 text-xs text-mute hover:text-ink"
+          >
+            <ChevronLeft className="size-3.5" />
+            All courses
+          </Link>
+          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
+            {course.title}
           </h1>
-          <p className="text-sm text-body">
-            {weeks.length} weeks · {teachingDayCount(weeks)} teaching days ·{" "}
-            {weeks.length * QUIZZES_PER_WEEK} weekend quizzes
+          <p className="truncate text-xs sm:text-sm text-body">
+            {weeks.length} weeks · {teachingDayCount(weeks)} days
+            {course.level ? ` · ${course.level}` : ""}
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="font-display text-2xl font-extrabold text-ink">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="text-right hidden sm:block">
+            <div className="font-display text-lg sm:text-2xl font-extrabold text-ink leading-none">
               {stats.percent}%
             </div>
-            <div className="text-xs text-mute">
-              {stats.published} / {stats.total} slots published
+            <div className="text-[10px] sm:text-xs text-mute mt-1">
+              {stats.published} / {stats.total} published
             </div>
           </div>
           <Button
             onClick={() => guard(() => setAddingWeek(true))}
             disabled={pending}
+            className="h-9 sm:h-11 px-3 sm:px-6 text-xs sm:text-sm rounded-lg sm:rounded-xl"
           >
             <Plus />
             Add week
@@ -351,6 +373,7 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
           {week.days.map((day) => (
             <DayCard
               key={day.dayNumber}
+              courseSlug={course.slug}
               day={day}
               stagedNotesName={
                 assetEdits[assetKey(day.dayNumber, "notes")]?.file.name
@@ -375,6 +398,7 @@ export function ContentManager({ weeks }: { weeks: CurriculumWeek[] }) {
             {week.quizzes.map((quiz) => (
               <QuizCard
                 key={quiz.id}
+                courseSlug={course.slug}
                 quiz={quiz}
                 weekNumber={week.weekNumber}
               />
@@ -634,12 +658,14 @@ function WeekPill({
 }
 
 function DayCard({
+  courseSlug,
   day,
   stagedNotesName,
   onPickNotes,
   pending,
   onTogglePublish,
 }: {
+  courseSlug: string;
   day: CurriculumDay;
   stagedNotesName: string | undefined;
   onPickNotes: (file: File) => void;
@@ -687,7 +713,7 @@ function DayCard({
           </Button>
           <Button variant="ghost" size="sm" asChild>
             <Link
-              href={`/admin/content-management/${day.dayNumber}`}
+              href={`/admin/content-management/${courseSlug}/${day.dayNumber}`}
               aria-label={`View ${day.title}`}
             >
               <Eye />
@@ -712,7 +738,7 @@ function DayCard({
             {STATUS_LABEL[day.video.status]}
           </Badge>
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/content-management/${day.dayNumber}`}>
+            <Link href={`/admin/content-management/${courseSlug}/${day.dayNumber}`}>
               <Upload />
               Manage
             </Link>
@@ -762,7 +788,7 @@ function DayCard({
             {STATUS_LABEL[day.task.status]}
           </Badge>
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/content-management/${day.dayNumber}`}>
+            <Link href={`/admin/content-management/${courseSlug}/${day.dayNumber}`}>
               <Pencil />
               Manage
             </Link>
@@ -774,13 +800,15 @@ function DayCard({
 }
 
 function QuizCard({
+  courseSlug,
   quiz,
   weekNumber,
 }: {
+  courseSlug: string;
   quiz: WeekendQuiz;
   weekNumber: number;
 }) {
-  const href = `/admin/content-management/quiz/${weekNumber}/${quiz.day}`;
+  const href = `/admin/content-management/${courseSlug}/quiz/${weekNumber}/${quiz.day}`;
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">

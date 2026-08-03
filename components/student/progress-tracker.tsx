@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
-import { TOTAL_TEACHING_DAYS, type StudentJourney } from "@/lib/student/progress";
+import { type StudentJourney } from "@/lib/student/progress";
 
 // Shared progress furniture for the student screens. Every student page shows
 // "how far am I" in some form, so the meter, the stat tile and the programme
@@ -88,8 +88,12 @@ export function StatTile({
  * the student is on a path, not in a deficit.
  */
 export function ProgressTracker({ journey }: { journey: StudentJourney }) {
-  const percent = Math.round((journey.daysCompleted / TOTAL_TEACHING_DAYS) * 100);
-  const remaining = TOTAL_TEACHING_DAYS - journey.daysCompleted;
+  // Denominators come from the student's own course — courses run to different
+  // lengths, so there is no shared total to fall back on.
+  const total = journey.totalDays;
+  const percent =
+    total === 0 ? 0 : Math.round((journey.daysCompleted / total) * 100);
+  const remaining = Math.max(0, total - journey.daysCompleted);
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6">
@@ -98,7 +102,7 @@ export function ProgressTracker({ journey }: { journey: StudentJourney }) {
           <span className="font-display text-3xl font-extrabold tabular-nums text-ink">
             Day {journey.currentDay}
           </span>
-          <span className="text-sm text-mute">of {TOTAL_TEACHING_DAYS}</span>
+          <span className="text-sm text-mute">of {total}</span>
         </div>
         <span className="text-sm font-semibold tabular-nums text-ink">{percent}%</span>
       </div>
@@ -106,7 +110,7 @@ export function ProgressTracker({ journey }: { journey: StudentJourney }) {
       <Meter percent={percent} label="Programme progress" />
 
       <p className="text-xs text-mute">
-        Week {journey.currentWeek} of 12 · {remaining} teaching{" "}
+        Week {journey.currentWeek} of {journey.totalWeeks} · {remaining} teaching{" "}
         {remaining === 1 ? "day" : "days"} to go
       </p>
     </div>

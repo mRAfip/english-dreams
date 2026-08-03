@@ -32,12 +32,12 @@ export function ProfileSettings({
 }) {
   return (
     <div>
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Profile
           </h1>
-          <p className="text-sm text-body">Your account details.</p>
+          <p className="truncate text-xs sm:text-sm text-body">Your account details.</p>
         </div>
         <SignOutButton />
       </header>

@@ -1,15 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { getCurriculum } from "@/lib/content/queries";
-import { TEACHING_DAYS_PER_WEEK } from "@/types/content";
+import { getCourseById, getCurriculum } from "@/lib/content/queries";
+import { courseIdsForStudents } from "@/lib/student/course";
+import { TEACHING_DAYS_PER_WEEK, type CurriculumWeek } from "@/types/content";
 import type { AssignedStudent, DayState } from "@/lib/trainer/roster";
 
 // Server-only loader for the signed-in trainer's roster. Combines three tables:
 //   student_trainer_assignments  → which students are mine
 //   student_day_progress         → which teaching days each has completed
 //   student_quiz_attempts        → their weekend quiz average
-// against the published curriculum (which days are released).
+// against each student's OWN course curriculum (which days are released).
+//
+// A trainer's students can be on different courses, so the curriculum is loaded
+// once per distinct course and each student is measured against theirs. Day
+// numbers from another course are ignored — a student moved between courses
+// keeps their old rows, but those count towards the old course, not the new.
 //
 // Kept separate from lib/trainer/roster (types + pure helpers, client-safe)
 // because this reads via next/headers and must not reach a Client Component.
@@ -51,35 +57,59 @@ export async function loadAssignedRoster(): Promise<AssignedStudent[]> {
   //    students' names/emails through their own client. Safe here — `ids` are
   //    exactly this trainer's assigned students.
   const admin = createAdminClient();
-  const [{ data: profiles }, { data: progress }, { data: attempts }, curriculum] =
-    await Promise.all([
-      admin.from("profiles").select("id, full_name, email").in("id", ids),
-      supabase
-        .from("student_day_progress")
-        .select(
-          "user_id, task_completed, content_days!inner(weekday, content_weeks!inner(week_number))",
-        )
-        .in("user_id", ids),
-      supabase
-        .from("student_quiz_attempts")
-        .select("user_id, score")
-        .in("user_id", ids),
-      getCurriculum(),
-    ]);
+  const [
+    { data: profiles },
+    { data: progress },
+    { data: attempts },
+    courseByStudent,
+  ] = await Promise.all([
+    admin.from("profiles").select("id, full_name, email").in("id", ids),
+    supabase
+      .from("student_day_progress")
+      .select(
+        "user_id, task_completed, content_days!inner(weekday, content_weeks!inner(week_number, course_id))",
+      )
+      .in("user_id", ids),
+    supabase
+      .from("student_quiz_attempts")
+      .select("user_id, score")
+      .in("user_id", ids),
+    courseIdsForStudents(ids),
+  ]);
 
-  const totalWeeks = curriculum.length;
-  const releasedDays = new Set<number>();
-  for (const week of curriculum) {
-    for (const day of week.days) {
-      if (
-        day.video.status === "published" ||
-        day.notes.status === "published" ||
-        day.task.status === "published"
-      ) {
-        releasedDays.add(day.dayNumber);
+  // One curriculum read per distinct course, shared by the students on it.
+  const courseIds = [
+    ...new Set([...courseByStudent.values()].filter((c): c is string => !!c)),
+  ];
+  const courseInfo = new Map<
+    string,
+    { title: string; weeks: CurriculumWeek[]; released: Set<number> }
+  >();
+  await Promise.all(
+    courseIds.map(async (courseId) => {
+      const [course, weeks] = await Promise.all([
+        getCourseById(courseId),
+        getCurriculum(courseId),
+      ]);
+      const released = new Set<number>();
+      for (const week of weeks) {
+        for (const day of week.days) {
+          if (
+            day.video.status === "published" ||
+            day.notes.status === "published" ||
+            day.task.status === "published"
+          ) {
+            released.add(day.dayNumber);
+          }
+        }
       }
-    }
-  }
+      courseInfo.set(courseId, {
+        title: course?.title ?? "",
+        weeks,
+        released,
+      });
+    }),
+  );
 
   // Completed teaching-day numbers per student.
   const completedByUser = new Map<string, Set<number>>();
@@ -88,13 +118,15 @@ export async function loadAssignedRoster(): Promise<AssignedStudent[]> {
     task_completed: boolean;
     content_days: Embedded<{
       weekday: number;
-      content_weeks: Embedded<{ week_number: number }>;
+      content_weeks: Embedded<{ week_number: number; course_id: string }>;
     }>;
   }[]) {
     if (!row.task_completed) continue;
     const day = one(row.content_days);
     const week = one(day?.content_weeks);
     if (!day?.weekday || !week?.week_number) continue;
+    // Only days of the course the student is on now.
+    if (week.course_id !== courseByStudent.get(row.user_id)) continue;
     const dayNumber =
       (week.week_number - 1) * TEACHING_DAYS_PER_WEEK + day.weekday;
     const set = completedByUser.get(row.user_id) ?? new Set<number>();
@@ -111,18 +143,22 @@ export async function loadAssignedRoster(): Promise<AssignedStudent[]> {
   }
 
   const profileById = new Map(
-    ((profiles ?? []) as {
-      id: string;
-      full_name: string | null;
-      email: string;
-    }[]).map((p) => [p.id, p]),
+    (
+      (profiles ?? []) as {
+        id: string;
+        full_name: string | null;
+        email: string;
+      }[]
+    ).map((p) => [p.id, p]),
   );
 
   return ids.map((id) => {
     const profile = profileById.get(id);
+    const courseId = courseByStudent.get(id) ?? null;
+    const info = courseId ? courseInfo.get(courseId) : undefined;
     const completed = completedByUser.get(id) ?? new Set<number>();
     const daysCompleted = completed.size;
-    const week = currentWeek(daysCompleted, totalWeeks);
+    const week = currentWeek(daysCompleted, info?.weeks.length ?? 0);
 
     // This week's five teaching days.
     const weekDays: DayState[] = Array.from(
@@ -130,7 +166,7 @@ export async function loadAssignedRoster(): Promise<AssignedStudent[]> {
       (_, i) => {
         const dayNumber = (week - 1) * TEACHING_DAYS_PER_WEEK + i + 1;
         if (completed.has(dayNumber)) return "done";
-        if (releasedDays.has(dayNumber)) return "pending";
+        if (info?.released.has(dayNumber)) return "pending";
         return "upcoming";
       },
     );
@@ -145,8 +181,10 @@ export async function loadAssignedRoster(): Promise<AssignedStudent[]> {
       id,
       name: profile?.full_name || profile?.email || "Student",
       email: profile?.email ?? "",
+      courseTitle: info?.title ?? null,
       week,
       daysCompleted,
+      totalDays: (info?.weeks.length ?? 0) * TEACHING_DAYS_PER_WEEK,
       weekDays,
       pendingReview: 0, // review flow not built yet
       quizAvg,

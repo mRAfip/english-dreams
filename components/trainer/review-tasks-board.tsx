@@ -14,7 +14,6 @@ import {
   GradingPanelEmpty,
 } from "@/components/trainer/grading-panel";
 import {
-  loadReviewQueue,
   slaLevel,
   type ReviewStatus,
   type Submission,
@@ -31,8 +30,12 @@ import {
 
 type QueueTab = "pending" | "reviewed" | "all";
 
-export function ReviewTasksBoard() {
-  const [submissions, setSubmissions] = React.useState<Submission[]>(loadReviewQueue);
+export function ReviewTasksBoard({
+  initialSubmissions = [],
+}: {
+  initialSubmissions?: Submission[];
+}) {
+  const [submissions, setSubmissions] = React.useState<Submission[]>(initialSubmissions);
   const [tab, setTab] = React.useState<QueueTab>("pending");
   const [query, setQuery] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);

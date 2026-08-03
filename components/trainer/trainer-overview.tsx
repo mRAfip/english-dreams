@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  loadReviewQueue,
   slaLevel,
   waitingLabel,
   type Submission,
@@ -29,9 +28,7 @@ import {
   attentionSeverity,
   daysDoneThisWeek,
   initials,
-  loadAssignedStudents,
   TEACHING_DAYS_PER_WEEK,
-  TOTAL_DAYS,
   type AssignedStudent,
 } from "@/lib/trainer/roster";
 
@@ -73,9 +70,15 @@ const SLA: Record<
   overdue: { variant: "negative", label: "Overdue" },
 };
 
-export function TrainerOverview({ name }: { name: string }) {
-  const queue = loadReviewQueue();
-  const roster = loadAssignedStudents();
+export function TrainerOverview({
+  name,
+  queue,
+  roster,
+}: {
+  name: string;
+  queue: Submission[];
+  roster: AssignedStudent[];
+}) {
 
   const pending = queue
     .filter((s) => s.status === "pending")
@@ -264,7 +267,7 @@ export function TrainerOverview({ name }: { name: string }) {
                 />
                 <Line
                   term="Teaching days per student"
-                  detail={`${TEACHING_DAYS_PER_WEEK} · ${TOTAL_DAYS}-day programme`}
+                  detail={`${TEACHING_DAYS_PER_WEEK} teaching days per week`}
                 />
               </dl>
             </div>
@@ -329,7 +332,8 @@ function FlaggedStudent({ student }: { student: AssignedStudent }) {
       <div className="min-w-0">
         <div className="text-sm font-semibold text-ink">{student.name}</div>
         <div className="text-xs text-mute">
-          Week {student.week} · day {student.daysCompleted} of {TOTAL_DAYS}
+          Week {student.week} · day {student.daysCompleted} of{" "}
+          {student.totalDays}
         </div>
         <Badge variant={high ? "negative" : "warning"} className="mt-1.5">
           <AlertTriangle className="size-3.5" />

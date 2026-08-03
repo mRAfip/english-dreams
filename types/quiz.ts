@@ -25,6 +25,11 @@ export type StudentQuizQuestion = {
 /** The admin's full view of a paper. */
 export type AdminQuiz = {
   id: string;
+  /** The course the paper's week belongs to — every lookup is course-scoped. */
+  courseId: string;
+  /** Carried alongside the id so the builder can link back without a re-read. */
+  courseSlug: string;
+  courseTitle: string;
   weekNumber: number;
   day: QuizDay;
   kind: QuizKind;

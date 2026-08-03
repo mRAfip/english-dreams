@@ -3,7 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudents } from "@/lib/student/directory";
 import { getDownloadUrl } from "@/lib/r2/presign";
 import { isR2Configured } from "@/lib/r2/client";
-import { TEACHING_DAYS_PER_WEEK, TOTAL_TEACHING_DAYS } from "@/types/content";
+import { courseIdsForStudents } from "@/lib/student/course";
+import { listCourseOptions } from "@/lib/content/queries";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { TEACHING_DAYS_PER_WEEK } from "@/types/content";
 import {
   NEARING_COMPLETION_DAYS,
   type CertificateStatus,
@@ -16,10 +19,25 @@ import {
 // with the service-role client because student_day_progress RLS is per-student
 // (a student sees only their own); this loader is only reached from the
 // admin-guarded page.
+//
+// Completion is measured against THE STUDENT'S OWN COURSE. Courses have
+// different lengths, so there is no single "60 days" to finish — a certificate
+// means "completed <course>", and the denominator is that course's authored day
+// count. A student with no course assigned can never be "ready".
 
 const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 function formatDate(iso: string): string {
@@ -34,7 +52,7 @@ type ProgressRow = {
   updated_at: string;
   content_days: Embedded<{
     weekday: number;
-    content_weeks: Embedded<{ week_number: number }>;
+    content_weeks: Embedded<{ week_number: number; course_id: string }>;
   }>;
 };
 type Embedded<T> = T | T[] | null;
@@ -43,15 +61,42 @@ function one<T>(v: Embedded<T> | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : v;
 }
 
+/**
+ * Completion status against the student's own course length. `totalDays` of 0
+ * means no course assigned (or an empty one) — never "ready", since there is
+ * nothing to have completed.
+ */
 function statusFor(
   daysCompleted: number,
+  totalDays: number,
   hasCertificate: boolean,
 ): CertificateStatus {
   if (hasCertificate) return "issued";
-  if (daysCompleted >= TOTAL_TEACHING_DAYS) return "ready";
-  if (daysCompleted >= TOTAL_TEACHING_DAYS - NEARING_COMPLETION_DAYS)
-    return "nearing";
+  if (totalDays === 0) return "in_progress";
+  if (daysCompleted >= totalDays) return "ready";
+  if (daysCompleted >= totalDays - NEARING_COMPLETION_DAYS) return "nearing";
   return "in_progress";
+}
+
+/** Teaching days each course has been authored to, keyed by course id. */
+async function courseDayCounts(): Promise<Map<string, number>> {
+  const supabase = await createServerClient();
+  const courses = await listCourseOptions();
+  const counts = new Map<string, number>();
+  if (courses.length === 0) return counts;
+
+  const { data } = await supabase.from("content_weeks").select("course_id");
+  const weeksByCourse = new Map<string, number>();
+  for (const w of (data ?? []) as { course_id: string }[]) {
+    weeksByCourse.set(w.course_id, (weeksByCourse.get(w.course_id) ?? 0) + 1);
+  }
+  for (const course of courses) {
+    counts.set(
+      course.id,
+      (weeksByCourse.get(course.id) ?? 0) * TEACHING_DAYS_PER_WEEK,
+    );
+  }
+  return counts;
 }
 
 /** All students with completion status + certificate, for the admin manager. */
@@ -61,21 +106,31 @@ export async function getCertificateStudents(): Promise<CertificateStudent[]> {
   const ids = students.map((s) => s.id);
 
   const admin = createAdminClient();
-  const [{ data: progress }, { data: attempts }, { data: certs }] =
-    await Promise.all([
-      admin
-        .from("student_day_progress")
-        .select(
-          "user_id, task_completed, updated_at, content_days!inner(weekday, content_weeks!inner(week_number))",
-        )
-        .in("user_id", ids)
-        .eq("task_completed", true),
-      admin.from("student_quiz_attempts").select("user_id, score").in("user_id", ids),
-      admin
-        .from("certificates")
-        .select("student_id, r2_key, file_name, issued_at")
-        .in("student_id", ids),
-    ]);
+  const [
+    { data: progress },
+    { data: attempts },
+    { data: certs },
+    courseByStudent,
+    dayCountByCourse,
+  ] = await Promise.all([
+    admin
+      .from("student_day_progress")
+      .select(
+        "user_id, task_completed, updated_at, content_days!inner(weekday, content_weeks!inner(week_number, course_id))",
+      )
+      .in("user_id", ids)
+      .eq("task_completed", true),
+    admin
+      .from("student_quiz_attempts")
+      .select("user_id, score")
+      .in("user_id", ids),
+    admin
+      .from("certificates")
+      .select("student_id, r2_key, file_name, issued_at")
+      .in("student_id", ids),
+    courseIdsForStudents(ids),
+    courseDayCounts(),
+  ]);
 
   // Distinct completed teaching-day numbers + the latest completion time.
   const completedDays = new Map<string, Set<number>>();
@@ -84,6 +139,9 @@ export async function getCertificateStudents(): Promise<CertificateStudent[]> {
     const day = one(row.content_days);
     const week = one(day?.content_weeks);
     if (!day?.weekday || !week?.week_number) continue;
+    // Only count days of the course the student is on now — rows left behind by
+    // a course change belong to their old course's completion, not this one's.
+    if (week.course_id !== courseByStudent.get(row.user_id)) continue;
     const dayNumber =
       (week.week_number - 1) * TEACHING_DAYS_PER_WEEK + day.weekday;
     const set = completedDays.get(row.user_id) ?? new Set<number>();
@@ -126,7 +184,9 @@ export async function getCertificateStudents(): Promise<CertificateStudent[]> {
         ? null
         : Math.round(scoreArr.reduce((sum, n) => sum + n, 0) / scoreArr.length);
     const certificate = certByStudent.get(s.id) ?? null;
-    const finished = daysCompleted >= TOTAL_TEACHING_DAYS;
+    const courseId = courseByStudent.get(s.id) ?? null;
+    const totalDays = courseId ? (dayCountByCourse.get(courseId) ?? 0) : 0;
+    const finished = totalDays > 0 && daysCompleted >= totalDays;
     const finishedAt = lastCompletedAt.get(s.id);
 
     return {
@@ -135,9 +195,9 @@ export async function getCertificateStudents(): Promise<CertificateStudent[]> {
       email: s.email,
       avatarUrl: s.avatarUrl,
       daysCompleted,
-      totalDays: TOTAL_TEACHING_DAYS,
+      totalDays,
       finalScore,
-      status: statusFor(daysCompleted, certificate !== null),
+      status: statusFor(daysCompleted, totalDays, certificate !== null),
       completedAt: finished && finishedAt ? formatDate(finishedAt) : null,
       certificate,
     };
@@ -156,11 +216,17 @@ export async function getStudentCertificate(
     .maybeSingle();
   if (!data) return null;
 
-  const c = data as { r2_key: string; file_name: string | null; issued_at: string };
+  const c = data as {
+    r2_key: string;
+    file_name: string | null;
+    issued_at: string;
+  };
   return {
     fileKey: c.r2_key,
     fileName: c.file_name ?? "certificate",
     issuedAt: formatDate(c.issued_at),
-    downloadUrl: isR2Configured() ? getDownloadUrl(c.r2_key, "attachment") : null,
+    downloadUrl: isR2Configured()
+      ? getDownloadUrl(c.r2_key, "attachment")
+      : null,
   };
 }

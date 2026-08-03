@@ -1,22 +1,22 @@
 import { weekNumberForDay } from "@/lib/content/curriculum";
 import {
   TEACHING_DAYS_PER_WEEK,
-  TOTAL_TEACHING_DAYS,
-  WEEKS_IN_PROGRAMME,
+  type Course,
   type CurriculumDay,
   type CurriculumWeek,
   type WeekendQuiz,
 } from "@/types/content";
 
-// One student's journey through the 60-day programme — the model every student
-// screen reads from. Home, learning path, quizzes and certificates all render
-// slices of the same `StudentJourney`, so they cannot disagree about which day
-// the student is on or what they scored.
+// One student's journey through THEIR COURSE — the model every student screen
+// reads from. Home, learning path, quizzes and certificates all render slices
+// of the same `StudentJourney`, so they cannot disagree about which day the
+// student is on or what they scored.
 //
-// SCAFFOLD: the curriculum itself is real (buildCurriculum), but the overlay —
-// what has been watched, submitted, graded and scored — is generated from the
-// day number. Replace `loadJourney` with a Supabase read once the task and
-// quiz_attempt tables land; the components only depend on the types.
+// The journey is always scoped to one course (students are assigned exactly
+// one). Its length is whatever that course has been authored to — there is no
+// fixed 60 days any more, so `totalDays`/`totalWeeks` are the only denominators
+// any screen should use. A student with no course assigned gets an empty
+// journey with `course: null`, which the screens render as a waiting state.
 //
 // Note on content status: the admin ContentStatus ("draft"/"empty") is about
 // authoring, not entitlement. A student's access is decided by how far they
@@ -117,15 +117,17 @@ export type StudentWeek = {
 };
 
 export type StudentJourney = {
+  /** The course this journey belongs to. Null when the admin hasn't assigned one. */
+  course: Course | null;
   /** The latest released teaching day. 0 when nothing is published yet. */
   currentDay: number;
   /** Released teaching days behind the current one. */
   daysCompleted: number;
   currentWeek: number;
   streakDays: number;
-  /** Teaching days in the programme as authored (from the content tables). */
+  /** Teaching days in THIS COURSE as authored (from the content tables). */
   totalDays: number;
-  /** Weeks in the programme as authored. */
+  /** Weeks in this course as authored. */
   totalWeeks: number;
   weeks: StudentWeek[];
   /** The trainer who reviews this student's work. */
@@ -200,14 +202,15 @@ function isReleased(day: CurriculumDay): boolean {
 }
 
 /**
- * Build a student's journey from the real curriculum (the admin-authored
- * content tables). The programme's shape — weeks, days, video/notes/task — is
- * live data; access is gated on publish status (unpublished days read as
- * locked). The activity overlay (scores, submission states, watched/downloaded,
- * streak) is still scaffold: it needs the submissions & quiz_attempt tables,
- * which don't exist yet, so it is derived deterministically from the day number.
+ * Build a student's journey from their course's curriculum (the admin-authored
+ * content tables). The course's shape — weeks, days, video/notes/task — is live
+ * data; access is gated on publish status (unpublished days read as locked).
+ *
+ * Pass `course: null` with an empty curriculum for an unassigned student: every
+ * count comes out zero and the screens show the "no course yet" state.
  */
 export function buildJourney(
+  course: Course | null,
   curriculum: CurriculumWeek[],
   progressByDay: Map<number, DayProgress> = new Map(),
   attemptsByQuiz: Map<string, QuizAttempt> = new Map(),
@@ -325,6 +328,7 @@ export function buildJourney(
   });
 
   return {
+    course,
     currentDay,
     daysCompleted,
     currentWeek,
@@ -351,7 +355,7 @@ export function today(journey: StudentJourney): StudentDay | null {
   return allDays(journey).find((d) => d.state === "today") ?? null;
 }
 
-/** Progress through the released days, as a percentage of the whole programme. */
+/** Progress through the course, as a percentage of its authored days. */
 export function progressPercent(journey: StudentJourney): number {
   return journey.totalDays === 0
     ? 0
@@ -399,4 +403,4 @@ export function openQuizzes(journey: StudentJourney): StudentQuiz[] {
   return allQuizzes(journey).filter((q) => q.state === "open");
 }
 
-export { TEACHING_DAYS_PER_WEEK, TOTAL_TEACHING_DAYS, WEEKS_IN_PROGRAMME };
+export { TEACHING_DAYS_PER_WEEK };

@@ -43,6 +43,8 @@ import type { FeeStatus, StudentRow } from "@/lib/student/directory";
 // (auth user + student role + trainer link) via a Server Action.
 
 type TrainerOption = { id: string; name: string };
+/** A course an admin can enrol a student on. */
+type CourseOption = { id: string; title: string };
 
 const FEE_LABEL: Record<FeeStatus, string> = {
   paid: "Fees paid",
@@ -59,9 +61,11 @@ const FEE_VARIANT: Record<FeeStatus, "positive" | "warning" | "neutral"> = {
 export function StudentDirectory({
   students,
   trainers,
+  courses,
 }: {
   students: StudentRow[];
   trainers: TrainerOption[];
+  courses: CourseOption[];
 }) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
@@ -73,6 +77,7 @@ export function StudentDirectory({
         (s) =>
           s.name.toLowerCase().includes(q) ||
           s.email.toLowerCase().includes(q) ||
+          (s.courseTitle?.toLowerCase().includes(q) ?? false) ||
           (s.trainerName?.toLowerCase().includes(q) ?? false),
       )
     : students;
@@ -80,12 +85,12 @@ export function StudentDirectory({
   return (
     <div>
       {/* Header */}
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Students
           </h1>
-          <p className="text-sm text-body">
+          <p className="truncate text-xs sm:text-sm text-body">
             {students.length} {students.length === 1 ? "student" : "students"}{" "}
             enrolled
           </p>
@@ -93,13 +98,14 @@ export function StudentDirectory({
 
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button className="self-start sm:self-auto">
+            <Button className="shrink-0 h-9 sm:h-11 px-3 sm:px-6 text-xs sm:text-sm rounded-lg sm:rounded-xl">
               <Plus />
               Add student
             </Button>
           </DialogTrigger>
           <AddStudentDialog
             trainers={trainers}
+            courses={courses}
             onDone={() => {
               setAddOpen(false);
               router.refresh();
@@ -139,6 +145,7 @@ export function StudentDirectory({
               <TableRow className="hover:bg-transparent">
                 <TableHead>Student</TableHead>
                 <TableHead className="hidden sm:table-cell">Email</TableHead>
+                <TableHead className="hidden md:table-cell">Course</TableHead>
                 <TableHead className="hidden md:table-cell">Trainer</TableHead>
                 <TableHead className="hidden lg:table-cell">Joined</TableHead>
                 <TableHead className="text-right">Status</TableHead>
@@ -175,6 +182,13 @@ export function StudentDirectory({
                     {s.email}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
+                    {s.courseTitle ? (
+                      <span className="text-body">{s.courseTitle}</span>
+                    ) : (
+                      <span className="text-mute">No course</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {s.trainerName ? (
                       s.trainerName
                     ) : (
@@ -206,9 +220,11 @@ export function StudentDirectory({
 /** The add-student form. Its own component so state resets when the dialog closes. */
 function AddStudentDialog({
   trainers,
+  courses,
   onDone,
 }: {
   trainers: TrainerOption[];
+  courses: CourseOption[];
   onDone: () => void;
 }) {
   const [pending, setPending] = React.useState(false);
@@ -221,6 +237,7 @@ function AddStudentDialog({
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
     const trainerId = String(form.get("trainerId") ?? "");
+    const courseId = String(form.get("courseId") ?? "");
     if (!name || !email) return;
 
     setPending(true);
@@ -231,6 +248,7 @@ function AddStudentDialog({
         email,
         password,
         trainerId: trainerId || null,
+        courseId: courseId || null,
       });
       if (result.ok) {
         onDone();
@@ -249,8 +267,9 @@ function AddStudentDialog({
       <DialogHeader>
         <DialogTitle>Add student</DialogTitle>
         <DialogDescription>
-          Creates a confirmed account, assigns the student role, and links them
-          to a trainer. Share the password — they can change it after signing in.
+          Creates a confirmed account, assigns the student role, enrols them on
+          a course, and links them to a trainer. Share the password — they can
+          change it after signing in.
         </DialogDescription>
       </DialogHeader>
 
@@ -284,6 +303,30 @@ function AddStudentDialog({
             placeholder="At least 6 characters"
             required
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="student-course">Course</Label>
+          <select
+            id="student-course"
+            name="courseId"
+            defaultValue=""
+            required
+            className="h-11 w-full rounded-md border border-input bg-card px-4 text-sm text-foreground shadow-sm transition-colors focus-visible:border-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <option value="" disabled>
+              Choose a course
+            </option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-mute">
+            {courses.length === 0
+              ? "No courses yet — create one from the Content page first."
+              : "This decides which weeks, days and quizzes they see."}
+          </p>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="student-trainer">Trainer</Label>

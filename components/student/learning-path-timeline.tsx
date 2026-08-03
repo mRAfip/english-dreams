@@ -16,7 +16,9 @@ import {
   type StudentWeek,
 } from "@/lib/student/progress";
 
-// Student > Learning Path — the 60-day programme, one week at a time.
+// Student > Learning Path — the student's own course, one week at a time.
+// Its length is whatever the course has been authored to, so every count on
+// this screen comes from the journey rather than a fixed programme size.
 //
 // Same shape as the admin content manager (components/admin/content-manager):
 // a week rail of pills across the top, the selected week's five days stacked
@@ -73,7 +75,7 @@ export function LearningPathTimeline({ journey }: { journey: StudentJourney }) {
       <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-            Learning path
+            {journey.course?.title ?? "Learning path"}
           </h1>
           <p className="text-xs sm:text-sm text-body">
             {journey.totalWeeks} weeks · {totalDays} teaching days · {journey.totalWeeks * 2} papers

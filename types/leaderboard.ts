@@ -37,8 +37,17 @@ export type LeaderboardEntry = {
   isViewer: boolean;
 };
 
-/** The whole board for one week. */
+/**
+ * The whole board for one (course, week) pair.
+ *
+ * A board never mixes courses. Two students on different courses sit different
+ * papers, so a combined ranking would be comparing marks that were never
+ * comparable — the board is grouped by course first, then by week within it.
+ */
 export type WeeklyLeaderboard = {
+  /** The course these students are all on. */
+  courseId: string;
+  courseTitle: string;
   weekNumber: number;
   /** Week theme from the curriculum, e.g. "Foundations". */
   title: string;
@@ -58,19 +67,25 @@ export type WeeklyLeaderboard = {
 export type TrainerLeaderboardEntry = LeaderboardEntry & {
   /** Rank among this trainer's assigned students only. Ties behave as above. */
   groupRank: number;
-  /** Rank across every student in the cohort — `LeaderboardEntry.rank`. */
+  /** Rank across every student on the same course-week — `LeaderboardEntry.rank`. */
   cohortRank: number;
 };
 
-/** One week of a trainer's board, scoped to their assigned students. */
+/**
+ * One (course, week) board for a trainer, scoped to their assigned students.
+ * A trainer's students can be spread across courses, so they get one board per
+ * course-week rather than a single mixed list.
+ */
 export type TrainerLeaderboard = {
+  courseId: string;
+  courseTitle: string;
   weekNumber: number;
   title: string;
   /** Sorted by groupRank. */
   entries: TrainerLeaderboardEntry[];
   /** Rows on this board — the denominator in "3rd of 7". */
   assigned: number;
-  /** Every student ranked cohort-wide — the denominator in "6th of 14". */
+  /** Every student on this course-week — the denominator in "6th of 14". */
   cohortSize: number;
 };
 

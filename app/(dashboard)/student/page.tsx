@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { loadJourney } from "@/lib/student/journey";
 import { StudentOverview } from "@/components/student/student-overview";
 import { getStudentSubmissions } from "@/lib/tasks/queries";
+import { NoCourseAssigned } from "@/components/student/no-course";
 
 // Student home — today's class, notes and task, with progress and recent
 // trainer feedback around them. Chrome (sidebar, topbar, breadcrumb) comes from
@@ -16,6 +17,8 @@ export default async function StudentDashboard() {
     loadJourney(),
     getStudentSubmissions(user.id),
   ]);
+
+  if (!journey.course) return <NoCourseAssigned />;
 
   return (
     <StudentOverview

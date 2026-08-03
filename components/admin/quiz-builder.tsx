@@ -108,6 +108,7 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
     setError(null);
     startTransition(async () => {
       await saveQuiz({
+        courseSlug: quiz.courseSlug,
         weekNumber: quiz.weekNumber,
         day: quiz.day,
         title: title.trim() || `Week ${quiz.weekNumber} ${quiz.kind}`,
@@ -115,6 +116,7 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
       });
       if (alsoPublish) {
         await setQuizPublished({
+          courseSlug: quiz.courseSlug,
           weekNumber: quiz.weekNumber,
           day: quiz.day,
           publish: !published,
@@ -127,11 +129,11 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
   return (
     <div>
       <Link
-        href="/admin/content-management"
+        href={`/admin/content-management/${quiz.courseSlug}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-body transition-colors hover:text-ink"
       >
         <ArrowLeft className="size-4" />
-        All content
+        {quiz.courseTitle}
       </Link>
 
       {/* Header */}

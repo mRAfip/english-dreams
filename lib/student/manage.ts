@@ -19,14 +19,20 @@ export type CreateStudentResult =
 
 /**
  * Provision a student: create the auth user (confirmed), ensure a profile, link
- * them to the 'student' role, and — if a trainer is chosen — record the
- * student→trainer assignment.
+ * them to the 'student' role, record the trainer assignment if one is chosen,
+ * and seed their access row with the course they'll follow.
+ *
+ * The course is what decides which curriculum they see, so it is required at
+ * creation — a student with no course lands on an empty learning path, which
+ * looks like a broken account rather than a pending decision.
  */
 export async function createStudent(input: {
   name: string;
   email: string;
   password: string;
   trainerId?: string | null;
+  /** The course this student will follow. Required — see the check below. */
+  courseId?: string | null;
 }): Promise<CreateStudentResult> {
   const adminId = await assertAdmin();
 
@@ -39,6 +45,8 @@ export async function createStudent(input: {
     return { ok: false, error: "Enter a valid email." };
   if (password.length < 6)
     return { ok: false, error: "Password must be at least 6 characters." };
+  if (!input.courseId)
+    return { ok: false, error: "Choose the course this student will follow." };
 
   const admin = createAdminClient();
 
@@ -101,7 +109,8 @@ export async function createStudent(input: {
   }
 
   // 5. Seed the access row so every student has an explicit access record from
-  //    day one (access on, fee unpaid). The login access-check reads this row.
+  //    day one (access on, fee unpaid). The login access-check reads this row,
+  //    and so does every course-scoped read — course_id lives here.
   const { error: accessError } = await admin
     .from("student_access")
     .upsert(
@@ -109,6 +118,7 @@ export async function createStudent(input: {
         student_id: userId,
         access_enabled: true,
         fee_status: "unpaid",
+        course_id: input.courseId,
         updated_by: adminId,
       },
       { onConflict: "student_id" },
@@ -126,9 +136,15 @@ export type UpdateStudentResult =
   | { ok: false; error: string };
 
 /**
- * Edit an existing student: name, email, an optional password reset, and the
- * trainer they're assigned to. Email and password changes go through the Auth
- * Admin API; the trainer link is upserted (or cleared when set to unassigned).
+ * Edit an existing student: name, email, an optional password reset, the
+ * trainer they're assigned to, and the course they follow. Email and password
+ * changes go through the Auth Admin API; the trainer link is upserted (or
+ * cleared when set to unassigned).
+ *
+ * MOVING A STUDENT BETWEEN COURSES restarts them at day 1 of the new course.
+ * Their old progress rows are kept, not deleted — they belong to the old
+ * course's days and are simply not counted against the new one, so moving a
+ * student back restores their history intact.
  */
 export async function updateStudent(input: {
   id: string;
@@ -136,6 +152,8 @@ export async function updateStudent(input: {
   email: string;
   password?: string;
   trainerId?: string | null;
+  /** Pass to move the student to a different course. Omit to leave it alone. */
+  courseId?: string | null;
 }): Promise<UpdateStudentResult> {
   const adminId = await assertAdmin();
 
@@ -181,7 +199,20 @@ export async function updateStudent(input: {
     return { ok: false, error: `Profile: ${profileError.message}` };
   }
 
-  // 3. Reconcile the trainer link — upsert when chosen, delete when cleared.
+  // 3. Course assignment, when the caller passed one.
+  if (input.courseId !== undefined) {
+    const { error: courseError } = await admin
+      .from("student_access")
+      .upsert(
+        { student_id: id, course_id: input.courseId, updated_by: adminId },
+        { onConflict: "student_id" },
+      );
+    if (courseError) {
+      return { ok: false, error: `Course: ${courseError.message}` };
+    }
+  }
+
+  // 4. Reconcile the trainer link — upsert when chosen, delete when cleared.
   if (input.trainerId) {
     const { error: linkError } = await admin
       .from("student_trainer_assignments")
@@ -271,5 +302,39 @@ export async function setStudentAccess(input: {
 
   revalidatePath("/admin/students");
   revalidatePath(`/admin/students/${input.id}`);
+  return { ok: true };
+}
+
+export type AdminResetUserPasswordResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+/**
+ * Reset any user's password (student or trainer) by their user ID.
+ * Restricted to administrators only.
+ */
+export async function adminResetUserPassword(input: {
+  userId: string;
+  password?: string;
+}): Promise<AdminResetUserPasswordResult> {
+  await assertAdmin();
+
+  const password = input.password?.trim() ?? "";
+  if (!password) {
+    return { ok: false, error: "Password cannot be empty." };
+  }
+  if (password.length < 6) {
+    return { ok: false, error: "Password must be at least 6 characters." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(input.userId, {
+    password,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
   return { ok: true };
 }

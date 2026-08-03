@@ -15,9 +15,16 @@ import type {
 
 // Server-only reads for the daily-task feature.
 
-/** content_days.id for a 1..60 day number, or null. */
+/**
+ * content_days.id for a day of a given course, or null.
+ *
+ * Day numbers repeat across courses, so the course is part of the key — never
+ * infer it, always pass the course the caller is actually working in (the URL's
+ * course for an admin, the student's own course for a student).
+ */
 export async function resolveDayId(
   supabase: SupabaseClient,
+  courseId: string,
   dayNumber: number,
 ): Promise<string | null> {
   const weekNumber = Math.floor((dayNumber - 1) / TEACHING_DAYS_PER_WEEK) + 1;
@@ -25,6 +32,7 @@ export async function resolveDayId(
   const { data: week } = await supabase
     .from("content_weeks")
     .select("id")
+    .eq("course_id", courseId)
     .eq("week_number", weekNumber)
     .maybeSingle();
   if (!week) return null;
@@ -61,9 +69,12 @@ function mapQuestion(q: QuestionRow): TaskQuestion {
 }
 
 /** The day's authored questions (with comprehension follow-ups), ordered. */
-export async function getTaskQuestions(dayNumber: number): Promise<TaskQuestion[]> {
+export async function getTaskQuestions(
+  courseId: string,
+  dayNumber: number,
+): Promise<TaskQuestion[]> {
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, dayNumber);
+  const dayId = await resolveDayId(supabase, courseId, dayNumber);
   if (!dayId) return [];
 
   const { data } = await supabase
@@ -106,11 +117,12 @@ function mapAnswer(a: AnswerRow): SubmissionAnswer {
 
 /** The student's submission for a day (their own, or a staff view), or null. */
 export async function getSubmission(
+  courseId: string,
   dayNumber: number,
   studentId: string,
 ): Promise<TaskSubmission | null> {
   const supabase = await createClient();
-  const dayId = await resolveDayId(supabase, dayNumber);
+  const dayId = await resolveDayId(supabase, courseId, dayNumber);
   if (!dayId) return null;
 
   const { data: sub } = await supabase

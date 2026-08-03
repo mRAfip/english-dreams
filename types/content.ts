@@ -1,12 +1,44 @@
-// Curriculum model — the shape of the 60-day programme.
+// Curriculum model — the shape of a course.
 //
-// Structure: 12 weeks x 7 days. The five weekdays are the numbered teaching
-// days (dayNumber 1..60, matching the "Day n / 60" progress shown to students);
-// the two weekend days carry quizzes instead and are NOT numbered, so a week
+// A COURSE (Basic, Intermediate, ...) is the top level. Inside it the shape is
+// always the same: N weeks x 7 days, where the five weekdays are the numbered
+// teaching days and the two weekend days carry quizzes instead. So a week
 // contributes 5 to the day count and 2 to the quiz count.
+//
+// Day numbers are scoped to their course: dayNumber = (week - 1) * 5 + weekday
+// WITHIN the course. "Day 12" only means something once you know the course, so
+// nothing here assumes a fixed programme length — a course is as long as it has
+// been authored.
 
 /** How far along a piece of content is. Drives the badge in the admin UI. */
 export type ContentStatus = "published" | "draft" | "empty";
+
+/**
+ * One course. The container an admin creates before authoring any content, and
+ * the thing a student is assigned to.
+ */
+export type Course = {
+  id: string;
+  /** URL-safe id used in admin routes, e.g. "basic". Unique. */
+  slug: string;
+  title: string;
+  /** One-line description shown on the course card and to students. */
+  description: string;
+  /** Free-text level label ("Beginner", "B1", ...). May be empty. */
+  level: string;
+  /** Ordering in the admin list and the assignment dropdown. */
+  position: number;
+  status: ContentStatus;
+};
+
+/** A course plus the rollup an admin sees on its card, without loading weeks. */
+export type CourseSummary = Course & {
+  weekCount: number;
+  /** Teaching days authored so far — weekCount * 5. */
+  dayCount: number;
+  /** Students currently assigned to this course. */
+  studentCount: number;
+};
 
 /** One video part of a day's class. A day can have several, ordered by position. */
 export type VideoPart = {
@@ -93,9 +125,9 @@ export type WeekendQuiz = {
   status: ContentStatus;
 };
 
-/** One week of the programme: 5 teaching days + 2 weekend quizzes. */
+/** One week of a course: 5 teaching days + 2 weekend quizzes. */
 export type CurriculumWeek = {
-  /** 1..12. */
+  /** 1..N within its course. */
   weekNumber: number;
   title: string;
   /** One-line description of what the week covers. */
@@ -104,7 +136,18 @@ export type CurriculumWeek = {
   quizzes: WeekendQuiz[];
 };
 
-export const WEEKS_IN_PROGRAMME = 12;
+/** A course together with its authored weeks — what the admin editor renders. */
+export type CourseCurriculum = {
+  course: Course;
+  weeks: CurriculumWeek[];
+};
+
+// A course's LENGTH is data, not a constant: two courses can run for different
+// numbers of weeks. Only the within-a-week shape is fixed.
 export const TEACHING_DAYS_PER_WEEK = 5;
 export const QUIZZES_PER_WEEK = 2;
-export const TOTAL_TEACHING_DAYS = WEEKS_IN_PROGRAMME * TEACHING_DAYS_PER_WEEK; // 60
+
+/** Teaching days in a course of `weekCount` weeks. */
+export function teachingDaysIn(weekCount: number): number {
+  return weekCount * TEACHING_DAYS_PER_WEEK;
+}

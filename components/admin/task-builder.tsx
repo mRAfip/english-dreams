@@ -44,9 +44,11 @@ const TYPE_HINT: Record<TaskQuestionType, string> = {
 };
 
 export function TaskBuilder({
+  courseSlug,
   dayNumber,
   questions,
 }: {
+  courseSlug: string;
   dayNumber: number;
   questions: TaskQuestion[];
 }) {
@@ -56,7 +58,7 @@ export function TaskBuilder({
   async function add(type: TaskQuestionType) {
     setAdding(true);
     try {
-      await addQuestion({ dayNumber, type });
+      await addQuestion({ courseSlug, dayNumber, type });
       toast.success(`Added: ${QUESTION_TYPE_LABEL[type]}`);
       router.refresh();
     } catch (e) {
@@ -110,6 +112,7 @@ export function TaskBuilder({
           questions.map((q, i) => (
             <QuestionCard
               key={q.id}
+              courseSlug={courseSlug}
               dayNumber={dayNumber}
               question={q}
               index={i}
@@ -123,11 +126,13 @@ export function TaskBuilder({
 }
 
 function QuestionCard({
+  courseSlug,
   dayNumber,
   question,
   index,
   total,
 }: {
+  courseSlug: string;
   dayNumber: number;
   question: TaskQuestion;
   index: number;
@@ -170,7 +175,7 @@ function QuestionCard({
             aria-label="Move up"
             onClick={() =>
               run("Couldn't reorder", () =>
-                moveQuestion({ dayNumber, id: question.id, direction: "up" }),
+                moveQuestion({ courseSlug, dayNumber, id: question.id, direction: "up" }),
               )
             }
           >
@@ -183,7 +188,7 @@ function QuestionCard({
             aria-label="Move down"
             onClick={() =>
               run("Couldn't reorder", () =>
-                moveQuestion({ dayNumber, id: question.id, direction: "down" }),
+                moveQuestion({ courseSlug, dayNumber, id: question.id, direction: "down" }),
               )
             }
           >
@@ -197,7 +202,7 @@ function QuestionCard({
             aria-label="Delete question"
             onClick={() =>
               run("Couldn't delete", async () => {
-                await deleteQuestion({ dayNumber, id: question.id });
+                await deleteQuestion({ courseSlug, dayNumber, id: question.id });
                 toast.success("Question removed");
               })
             }
@@ -246,6 +251,7 @@ function QuestionCard({
             onClick={() =>
               run("Couldn't save", async () => {
                 await updateQuestion({
+                  courseSlug,
                   dayNumber,
                   id: question.id,
                   prompt,
@@ -260,7 +266,11 @@ function QuestionCard({
         </div>
 
         {isComprehension ? (
-          <FollowupsEditor dayNumber={dayNumber} question={question} />
+          <FollowupsEditor
+            courseSlug={courseSlug}
+            dayNumber={dayNumber}
+            question={question}
+          />
         ) : null}
       </div>
     </div>
@@ -268,9 +278,11 @@ function QuestionCard({
 }
 
 function FollowupsEditor({
+  courseSlug,
   dayNumber,
   question,
 }: {
+  courseSlug: string;
   dayNumber: number;
   question: TaskQuestion;
 }) {
@@ -280,7 +292,7 @@ function FollowupsEditor({
   async function add() {
     setBusy(true);
     try {
-      await addFollowup({ dayNumber, questionId: question.id });
+      await addFollowup({ courseSlug, dayNumber, questionId: question.id });
       router.refresh();
     } catch {
       toast.error("Couldn't add follow-up");
@@ -307,7 +319,13 @@ function FollowupsEditor({
           </p>
         ) : (
           question.followups.map((f, i) => (
-            <FollowupRow key={f.id} dayNumber={dayNumber} followup={f} index={i} />
+            <FollowupRow
+              key={f.id}
+              courseSlug={courseSlug}
+              dayNumber={dayNumber}
+              followup={f}
+              index={i}
+            />
           ))
         )}
       </div>
@@ -316,10 +334,12 @@ function FollowupsEditor({
 }
 
 function FollowupRow({
+  courseSlug,
   dayNumber,
   followup,
   index,
 }: {
+  courseSlug: string;
   dayNumber: number;
   followup: TaskFollowup;
   index: number;
@@ -356,7 +376,7 @@ function FollowupRow({
         size="sm"
         disabled={busy || !dirty}
         onClick={() =>
-          run(() => updateFollowup({ dayNumber, id: followup.id, prompt }))
+          run(() => updateFollowup({ courseSlug, dayNumber, id: followup.id, prompt }))
         }
       >
         Save
@@ -367,7 +387,7 @@ function FollowupRow({
         disabled={busy}
         className="text-destructive hover:text-destructive"
         aria-label="Delete follow-up"
-        onClick={() => run(() => deleteFollowup({ dayNumber, id: followup.id }))}
+        onClick={() => run(() => deleteFollowup({ courseSlug, dayNumber, id: followup.id }))}
       >
         <Trash2 />
       </Button>

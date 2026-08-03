@@ -36,6 +36,7 @@ function probeDurationMin(file: File): Promise<number | null> {
 }
 
 export function AssetUploadButton({
+  courseSlug,
   dayNumber,
   kind,
   label,
@@ -43,6 +44,8 @@ export function AssetUploadButton({
   size = "sm",
   variant = "ghost",
 }: {
+  /** The course the day belongs to — day numbers repeat across courses. */
+  courseSlug: string;
   dayNumber: number;
   kind: AssetKind;
   label: string;
@@ -64,6 +67,7 @@ export function AssetUploadButton({
     setError(null);
     try {
       const { key, uploadUrl } = await requestUploadUrl({
+        courseSlug,
         dayNumber,
         kind,
         fileName: file.name,
@@ -81,6 +85,7 @@ export function AssetUploadButton({
       const durationMin = kind === "video" ? await probeDurationMin(file) : null;
 
       await saveAsset({
+        courseSlug,
         dayNumber,
         kind,
         key,
