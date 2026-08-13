@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -86,11 +86,17 @@ export function ReviewQueue({ items }: { items: ReviewQueueItem[] }) {
                       {item.answerCount === 1 ? "answer" : "answers"}
                     </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <Badge variant={STATUS_VARIANT[item.status]}>
-                      {STATUS_LABEL[item.status]}
-                    </Badge>
-                    <span className="text-xs text-mute">{item.submittedAt}</span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={STATUS_VARIANT[item.status]}>
+                        {STATUS_LABEL[item.status]}
+                      </Badge>
+                      <span className="text-xs text-mute">{item.submittedAt}</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-ink">
+                      <Eye className="size-4" />
+                      <span className="hidden sm:inline">View</span>
+                    </span>
                   </div>
                 </Link>
               </li>

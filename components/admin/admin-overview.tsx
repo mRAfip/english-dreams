@@ -64,19 +64,19 @@ export function AdminOverview({
   data: AdminOverviewData;
 }) {
   return (
-    <div>
-      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-6">
+    <div className="space-y-6">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-4 sm:pb-6">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h1 className="truncate font-display text-xl sm:text-3xl font-extrabold tracking-tight text-ink">
+          <h1 className="truncate font-display text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-ink">
             Welcome back, {name}
           </h1>
-          <p className="truncate text-xs sm:text-sm text-body">{today()}</p>
+          <p className="truncate text-[10px] sm:text-xs md:text-sm text-body">{today()}</p>
         </div>
 
         {!data.isEmpty && (
-          <Button asChild className="shrink-0 h-9 sm:h-11 px-3 sm:px-6 text-xs sm:text-sm rounded-lg sm:rounded-xl">
+          <Button asChild className="shrink-0 h-8 sm:h-11 px-3 sm:px-6 text-[10px] sm:text-sm rounded-lg sm:rounded-xl">
             <Link href="/admin/students">
-              <Plus />
+              <Plus className="mr-1 size-3.5 sm:size-4" />
               Add student
             </Link>
           </Button>
@@ -115,35 +115,35 @@ function EmptyState() {
   ];
 
   return (
-    <div className="mt-10 flex flex-col items-center text-center">
-      <span className="grid size-14 place-items-center rounded-2xl bg-primary-pale text-ink-deep">
-        <Users className="size-7" />
+    <div className="mt-6 sm:mt-10 flex flex-col items-center text-center">
+      <span className="grid size-12 sm:size-14 place-items-center rounded-2xl bg-primary-pale text-ink-deep">
+        <Users className="size-6 sm:size-7" />
       </span>
-      <h2 className="mt-5 font-display text-2xl font-extrabold tracking-tight text-ink">
+      <h2 className="mt-4 sm:mt-5 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-ink">
         Let&apos;s set up English Dreams
       </h2>
-      <p className="mt-2 max-w-md text-sm text-body">
+      <p className="mt-2 max-w-sm sm:max-w-md text-xs sm:text-sm text-body">
         There&apos;s no one here yet. Work through these three steps and your
         dashboard will fill in on its own.
       </p>
 
-      <div className="mt-8 grid w-full gap-4 text-left sm:grid-cols-3">
+      <div className="mt-6 sm:mt-8 grid w-full gap-4 text-left sm:grid-cols-3">
         {steps.map((step, i) => (
           <div
             key={step.title}
-            className="flex flex-col rounded-xl border border-border bg-card p-5"
+            className="flex flex-col rounded-xl border border-border bg-card p-4 sm:p-5"
           >
             <div className="flex items-center gap-3">
-              <span className="grid size-9 place-items-center rounded-lg bg-secondary text-ink">
-                <step.icon className="size-4" />
+              <span className="grid size-8 sm:size-9 place-items-center rounded-lg bg-secondary text-ink">
+                <step.icon className="size-3.5 sm:size-4" />
               </span>
-              <span className="text-xs font-semibold text-mute">
+              <span className="text-[10px] sm:text-xs font-semibold text-mute">
                 Step {i + 1}
               </span>
             </div>
-            <h3 className="mt-4 text-sm font-semibold text-ink">{step.title}</h3>
-            <p className="mt-1 flex-1 text-sm text-body">{step.body}</p>
-            <Button variant="tertiary" size="sm" asChild className="mt-4 self-start">
+            <h3 className="mt-3.5 text-xs sm:text-sm font-semibold text-ink">{step.title}</h3>
+            <p className="mt-1 flex-1 text-xs sm:text-sm text-body leading-relaxed">{step.body}</p>
+            <Button variant="tertiary" size="sm" asChild className="mt-4 self-start text-xs h-8 px-3">
               <Link href={step.href}>{step.cta}</Link>
             </Button>
           </div>
@@ -196,7 +196,7 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
     <>
       <section
         aria-label="Key numbers"
-        className="mt-6 grid gap-3 grid-cols-2 xl:grid-cols-4"
+        className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4"
       >
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
@@ -208,7 +208,7 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
         <section aria-labelledby="attention-heading" className="lg:col-span-2">
           <h2
             id="attention-heading"
-            className="font-display text-lg sm:text-xl font-extrabold text-ink"
+            className="font-display text-base sm:text-lg font-extrabold text-ink"
           >
             Needs attention
           </h2>
@@ -220,9 +220,9 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead>Student</TableHead>
-                    <TableHead>Issue</TableHead>
-                    <TableHead className="hidden text-right md:table-cell">
+                    <TableHead className="px-2 sm:px-4 text-xs">Student</TableHead>
+                    <TableHead className="px-2 sm:px-4 text-xs">Issue</TableHead>
+                    <TableHead className="hidden text-right md:table-cell px-2 sm:px-4 text-xs">
                       Trainer
                     </TableHead>
                   </TableRow>
@@ -241,14 +241,14 @@ function Dashboard({ data }: { data: AdminOverviewData }) {
         <section aria-labelledby="trainers-heading">
           <h2
             id="trainers-heading"
-            className="font-display text-lg sm:text-xl font-extrabold text-ink"
+            className="font-display text-base sm:text-lg font-extrabold text-ink"
           >
             Trainer load
           </h2>
 
-          <div className="mt-4 rounded-xl border border-border bg-card p-4 sm:p-6">
+          <div className="mt-4 rounded-xl border border-border bg-card p-3.5 sm:p-5">
             {data.trainers.length === 0 ? (
-              <p className="text-sm text-mute">
+              <p className="text-xs sm:text-sm text-mute">
                 No trainers yet.{" "}
                 <Link
                   href="/admin/trainers"
@@ -299,30 +299,30 @@ function AttentionRow({ row }: { row: AttentionItem }) {
   const flag = REASON[row.reason];
   return (
     <TableRow>
-      <TableCell className="py-2.5 sm:py-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Avatar className="size-8 sm:size-9">
+      <TableCell className="py-2.5 sm:py-4 px-2 sm:px-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Avatar className="size-7 sm:size-9 shrink-0">
             {row.avatarUrl && <AvatarImage src={row.avatarUrl} alt="" />}
-            <AvatarFallback className="text-[10px] sm:text-xs">{initials(row.name)}</AvatarFallback>
+            <AvatarFallback className="text-[9px] sm:text-xs">{initials(row.name)}</AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <Link
               href={`/admin/students/${row.id}`}
               className="font-semibold text-ink hover:underline text-xs sm:text-sm truncate block"
             >
               {row.name}
             </Link>
-            <div className="truncate text-[10px] sm:text-xs text-mute">{row.email}</div>
+            <div className="truncate text-[9px] sm:text-xs text-mute">{row.email}</div>
           </div>
         </div>
       </TableCell>
-      <TableCell className="py-2.5 sm:py-4">
-        <Badge variant={flag.variant} className="text-[10px] sm:text-xs py-0.5 px-2">
-          <flag.icon className="size-3 sm:size-3.5" />
+      <TableCell className="py-2.5 sm:py-4 px-2 sm:px-4">
+        <Badge variant={flag.variant} className="text-[9px] sm:text-[10px] md:text-xs py-0.5 px-1.5 sm:px-2 gap-1 font-medium whitespace-nowrap">
+          <flag.icon className="size-2.5 sm:size-3" />
           {flag.label}
         </Badge>
       </TableCell>
-      <TableCell className="hidden text-right text-mute md:table-cell py-2.5 sm:py-4 text-xs sm:text-sm">
+      <TableCell className="hidden text-right text-mute md:table-cell py-2.5 sm:py-4 px-2 sm:px-4 text-xs sm:text-sm">
         {row.trainerName ?? "—"}
       </TableCell>
     </TableRow>
@@ -350,22 +350,22 @@ function StatCard({
   }[tone];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-xs sm:text-sm text-body line-clamp-1">{label}</span>
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-1.5">
+        <span className="text-[10px] sm:text-xs md:text-sm font-medium text-body line-clamp-1">{label}</span>
         <span
           className={cn(
-            "flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-full",
+            "flex size-6 sm:size-8 shrink-0 items-center justify-center rounded-full",
             chip,
           )}
         >
-          <Icon className="size-3.5 sm:size-4" />
+          <Icon className="size-3 sm:size-4" />
         </span>
       </div>
-      <div className="mt-2.5 font-display text-xl sm:text-3xl font-extrabold tabular-nums text-ink leading-none">
+      <div className="mt-2 font-display text-lg sm:text-2xl md:text-3xl font-extrabold tabular-nums text-ink leading-none">
         {value}
       </div>
-      <div className="mt-1.5 text-[10px] sm:text-xs text-mute line-clamp-1">{hint}</div>
+      <div className="mt-1 text-[9px] sm:text-[11px] md:text-xs text-mute line-clamp-1">{hint}</div>
     </div>
   );
 }

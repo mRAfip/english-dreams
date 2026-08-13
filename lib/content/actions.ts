@@ -248,19 +248,27 @@ export async function setDayPublished(input: {
   const dayId = await resolveDayId(supabase, input.courseSlug, input.dayNumber);
   const target: ContentStatus = input.publish ? "published" : "draft";
 
-  // Task: only if a prompt has been written.
+  // Task: the current builder stores typed questions. Keep support for the
+  // legacy text prompt too, so either representation counts as saved content.
   const { data: day } = await supabase
     .from("content_days")
     .select("task_prompt")
     .eq("id", dayId)
     .maybeSingle();
-  if (day && String(day.task_prompt ?? "").trim()) {
-    const { error } = await supabase
-      .from("content_days")
-      .update({ task_status: target })
-      .eq("id", dayId);
-    if (error) throw new Error(`Failed to publish task: ${error.message}`);
+  const { count: questionCount, error: questionCountError } = await supabase
+    .from("task_questions")
+    .select("id", { count: "exact", head: true })
+    .eq("day_id", dayId);
+  if (questionCountError) {
+    throw new Error(`Failed to inspect task: ${questionCountError.message}`);
   }
+  const hasTask =
+    Boolean(String(day?.task_prompt ?? "").trim()) || (questionCount ?? 0) > 0;
+  const { error: taskError } = await supabase
+    .from("content_days")
+    .update({ task_status: hasTask ? target : "empty" })
+    .eq("id", dayId);
+  if (taskError) throw new Error(`Failed to publish task: ${taskError.message}`);
 
   // Assets: every uploaded notes row for the day.
   const { error: assetError } = await supabase
@@ -474,24 +482,6 @@ export async function updateVideoPart(input: {
       title: input.title.trim() || null,
       description: input.description.trim() || null,
     })
-    .eq("id", input.id);
-  if (error) throw new Error(`Failed to update video part: ${error.message}`);
-
-  revalidateDay(input.courseSlug, input.dayNumber);
-}
-
-/** Publish / unpublish a single video part. */
-export async function setVideoPartStatus(input: {
-  courseSlug: string;
-  dayNumber: number;
-  id: string;
-  status: ContentStatus;
-}): Promise<void> {
-  await assertAdmin();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("content_day_videos")
-    .update({ status: input.status })
     .eq("id", input.id);
   if (error) throw new Error(`Failed to update video part: ${error.message}`);
 

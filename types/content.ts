@@ -121,6 +121,8 @@ export type WeekendQuiz = {
   day: "saturday" | "sunday";
   title: string;
   kind: "practice" | "assessment";
+  /** Admin-allocated time for this assessment. */
+  durationMinutes: number;
   questionCount: number;
   status: ContentStatus;
 };

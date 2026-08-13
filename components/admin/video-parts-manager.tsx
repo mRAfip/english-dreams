@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
-  Eye,
-  EyeOff,
   ImagePlus,
   Loader2,
   Plus,
@@ -29,7 +27,6 @@ import {
   replaceVideoPart,
   requestThumbnailUploadUrl,
   requestUploadUrl,
-  setVideoPartStatus,
   setVideoPartThumbnail,
   updateVideoPart,
 } from "@/lib/content/actions";
@@ -37,8 +34,8 @@ import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/content/status";
 import type { VideoPart } from "@/types/content";
 
 // Admin > Content > Day — the video parts of a class. A day can have any number
-// of ordered parts; each uploads straight to R2 and can be published, replaced,
-// reordered or removed independently.
+// of ordered parts; each uploads straight to R2 and can be edited, replaced,
+// reordered or removed independently. Publishing is intentionally day-level.
 
 /** Read a video file's duration (minutes) in the browser. Null if unreadable. */
 function probeDurationMin(file: File): Promise<number | null> {
@@ -272,8 +269,6 @@ function PartRow({
     });
   }
 
-  const published = part.status === "published";
-
   return (
     <div className="rounded-lg border border-border p-3">
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -330,24 +325,6 @@ function PartRow({
               aria-label="Move down"
             >
               <ArrowDown />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() =>
-                run("Couldn't update", () =>
-                  setVideoPartStatus({
-                    courseSlug,
-                    dayNumber,
-                    id: part.id,
-                    status: published ? "draft" : "published",
-                  }),
-                )
-              }
-            >
-              {published ? <EyeOff /> : <Eye />}
-              {published ? "Unpublish" : "Publish"}
             </Button>
             <input
               ref={replaceRef}

@@ -39,6 +39,8 @@ export type TaskData = {
   threadAuthors: Record<string, { name: string; role: Role | null }>;
 };
 
+export type StudentDayDetailTab = "videos" | "notes" | "task";
+
 // Student > Learning path > one day. A playlist layout: the active video plays
 // on top, the Videos tab lists every part to switch between, then Notes and
 // Task. The day counts as watched only once every part has been played.
@@ -61,6 +63,7 @@ export function StudentDayDetail({
   notesViewUrl,
   notesDownloadUrl,
   task,
+  initialTab = "videos",
 }: {
   day: StudentDay;
   weekNumber: number;
@@ -69,6 +72,7 @@ export function StudentDayDetail({
   notesViewUrl: string | null;
   notesDownloadUrl: string | null;
   task: TaskData;
+  initialTab?: StudentDayDetailTab;
 }) {
   const router = useRouter();
   const [, startTransition] = React.useTransition();
@@ -80,17 +84,7 @@ export function StudentDayDetail({
     () => videos.find((v) => !v.watched)?.id ?? videos[0]?.id ?? null,
   );
 
-  const [activeTab, setActiveTab] = React.useState("videos");
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab");
-      if (tab === "task" || tab === "notes" || tab === "videos") {
-        setActiveTab(tab);
-      }
-    }
-  }, []);
+  const [activeTab, setActiveTab] = React.useState<StudentDayDetailTab>(initialTab);
 
   const active = videos.find((v) => v.id === activeId) ?? videos[0] ?? null;
   // Done once a submission exists that isn't awaiting a redo.
@@ -182,7 +176,13 @@ export function StudentDayDetail({
             </div>
 
             {/* Videos / Notes / Task */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-5">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) =>
+                setActiveTab(value as StudentDayDetailTab)
+              }
+              className="mt-5"
+            >
               <TabsList className="w-full">
                 <TabsTrigger value="videos" className="flex-1 justify-center">
                   <Video className="size-4" />

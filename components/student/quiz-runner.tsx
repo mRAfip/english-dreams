@@ -41,7 +41,7 @@ export function QuizRunner({
   const [loadError, setLoadError] = React.useState<string | null>(
     quiz.quizId ? null : "This paper isn't available.",
   );
-  const [answers, setAnswers] = React.useState<(number | null)[]>([]);
+  const [answers, setAnswers] = React.useState<number[][]>([]);
   const [index, setIndex] = React.useState(0);
   const [result, setResult] = React.useState<QuizAttemptResult | null>(null);
   const [ranOut, setRanOut] = React.useState(false);
@@ -55,7 +55,7 @@ export function QuizRunner({
       .then((qs) => {
         if (!live) return;
         setQuestions(qs);
-        setAnswers(qs.map(() => null));
+        setAnswers(qs.map(() => []));
       })
       .catch((e) =>
         live
@@ -67,7 +67,7 @@ export function QuizRunner({
     };
   }, [quiz.quizId]);
 
-  const answered = answers.filter((a) => a !== null).length;
+  const answered = answers.filter((a) => a.length > 0).length;
 
   const submit = React.useCallback(() => {
     if (!quiz.quizId || submitting || result) return;
@@ -86,7 +86,15 @@ export function QuizRunner({
   }, [submit]);
 
   function choose(optionIndex: number) {
-    setAnswers((prev) => prev.map((a, i) => (i === index ? optionIndex : a)));
+    setAnswers((prev) =>
+      prev.map((answer, i) => {
+        if (i !== index) return answer;
+        if (questions?.[index]?.answerMode !== "multiple") return [optionIndex];
+        return answer.includes(optionIndex)
+          ? answer.filter((selected) => selected !== optionIndex)
+          : [...answer, optionIndex].sort((a, b) => a - b);
+      }),
+    );
   }
 
   if (loadError) {
@@ -178,19 +186,26 @@ export function QuizRunner({
         <h2 className="font-display text-xl font-extrabold text-ink">
           {question.prompt}
         </h2>
+        <p className="mt-2 text-xs font-medium text-mute">
+          {question.answerMode === "multiple"
+            ? "Select all answers that apply."
+            : question.answerMode === "true_false"
+              ? "Choose True or False."
+              : "Select one answer."}
+        </p>
 
         <div
-          role="radiogroup"
+          role={question.answerMode === "multiple" ? "group" : "radiogroup"}
           aria-label={question.prompt}
           className="mt-5 flex flex-col gap-3"
         >
           {question.options.map((option, i) => {
-            const selected = answers[index] === i;
+            const selected = answers[index].includes(i);
             return (
               <button
                 key={i}
                 type="button"
-                role="radio"
+                role={question.answerMode === "multiple" ? "checkbox" : "radio"}
                 aria-checked={selected}
                 onClick={() => choose(i)}
                 className={cn(
@@ -202,7 +217,8 @@ export function QuizRunner({
               >
                 <span
                   className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+                    "flex size-6 shrink-0 items-center justify-center border text-xs font-semibold",
+                    question.answerMode === "multiple" ? "rounded-md" : "rounded-full",
                     selected
                       ? "border-ink bg-primary text-primary-foreground"
                       : "border-border text-mute",
@@ -243,7 +259,7 @@ export function QuizRunner({
             onClick={() =>
               setIndex((i) => Math.min(questions.length - 1, i + 1))
             }
-            disabled={answers[index] === null}
+            disabled={answers[index].length === 0}
           >
             Next
             <ArrowRight />
@@ -267,6 +283,11 @@ function Countdown({
 }) {
   const [remaining, setRemaining] = React.useState(seconds);
   const fired = React.useRef(false);
+  const onExpireRef = React.useRef(onExpire);
+
+  React.useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   React.useEffect(() => {
     const deadline = Date.now() + seconds * 1000;
@@ -276,11 +297,11 @@ function Countdown({
       if (left <= 0 && !fired.current) {
         fired.current = true;
         clearInterval(id);
-        onExpire();
+        onExpireRef.current();
       }
     }, 250);
     return () => clearInterval(id);
-  }, [seconds, onExpire]);
+  }, [seconds]);
 
   const urgent = remaining <= URGENT_SECONDS;
   const mins = Math.floor(remaining / 60);
@@ -381,7 +402,8 @@ function QuizResult({
         <ol className="mt-4 flex flex-col gap-3">
           {result.review.map((r) => {
             const right =
-              r.chosenIndex !== null && r.chosenIndex === r.correctIndex;
+              r.chosenIndices.length === r.correctIndices.length &&
+              r.correctIndices.every((index) => r.chosenIndices.includes(index));
             return (
               <li
                 key={r.questionId}
@@ -406,14 +428,16 @@ function QuizResult({
                   <div className="min-w-0">
                     <div className="font-semibold text-ink">{r.prompt}</div>
 
-                    {!right && r.chosenIndex !== null && (
+                    {!right && r.chosenIndices.length > 0 && (
                       <p className="mt-1 text-sm text-destructive">
-                        You chose: {r.options[r.chosenIndex]}
+                        You chose: {r.chosenIndices.map((index) => r.options[index]).join(", ")}
                       </p>
                     )}
                     <p className="mt-1 text-sm text-body">
-                      <span className="font-semibold text-ink">Answer:</span>{" "}
-                      {r.options[r.correctIndex]}
+                      <span className="font-semibold text-ink">
+                        {r.correctIndices.length === 1 ? "Answer:" : "Answers:"}
+                      </span>{" "}
+                      {r.correctIndices.map((index) => r.options[index]).join(", ")}
                     </p>
                     {r.explanation ? (
                       <p className="mt-1 text-sm text-mute">{r.explanation}</p>

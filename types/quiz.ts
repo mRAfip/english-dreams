@@ -3,6 +3,7 @@
 /** Which weekend day a paper falls on, and what kind it is. */
 export type QuizDay = "saturday" | "sunday";
 export type QuizKind = "practice" | "assessment";
+export type QuizAnswerMode = "single" | "multiple" | "true_false";
 
 /** A question as the ADMIN authors it — includes the answer + explanation. */
 export type QuizQuestion = {
@@ -10,8 +11,9 @@ export type QuizQuestion = {
   id?: string;
   prompt: string;
   options: string[];
-  /** Index into `options`. */
-  correctIndex: number;
+  answerMode: QuizAnswerMode;
+  /** One index for single-answer MCQ; one or more for multiple-answer MCQ. */
+  correctIndices: number[];
   explanation: string;
 };
 
@@ -20,6 +22,7 @@ export type StudentQuizQuestion = {
   id: string;
   prompt: string;
   options: string[];
+  answerMode: QuizAnswerMode;
 };
 
 /** The admin's full view of a paper. */
@@ -34,6 +37,8 @@ export type AdminQuiz = {
   day: QuizDay;
   kind: QuizKind;
   title: string;
+  /** Admin-allocated time for this assessment. */
+  durationMinutes: number;
   status: "published" | "draft" | "empty";
   questions: QuizQuestion[];
 };
@@ -43,8 +48,9 @@ export type QuizReviewItem = {
   questionId: string;
   prompt: string;
   options: string[];
-  chosenIndex: number | null;
-  correctIndex: number;
+  answerMode: QuizAnswerMode;
+  chosenIndices: number[];
+  correctIndices: number[];
   explanation: string;
 };
 

@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { DayDetail } from "@/components/admin/day-detail";
+import {
+  DayDetail,
+  type DayDetailTab,
+} from "@/components/admin/day-detail";
 import { getCourseBySlug, getDay } from "@/lib/content/queries";
 import { getTaskQuestions } from "@/lib/tasks/queries";
 import { getDownloadUrl } from "@/lib/r2/presign";
@@ -12,10 +15,17 @@ import { isR2Configured } from "@/lib/r2/client";
 // has been authored that far, which getDay() answers.
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseSlug: string; dayNumber: string }>;
+  searchParams: Promise<{ tab?: string | string[] }>;
 }) {
   const { courseSlug, dayNumber } = await params;
+  const requestedTab = (await searchParams).tab;
+  const initialTab: DayDetailTab =
+    requestedTab === "notes" || requestedTab === "task" || requestedTab === "videos"
+      ? requestedTab
+      : "videos";
 
   const parsed = Number(dayNumber);
   if (!Number.isInteger(parsed) || parsed < 1) notFound();
@@ -44,10 +54,9 @@ export default async function Page({
     : {};
   const notesKey =
     configured && found.day.notes.assetKey ? found.day.notes.assetKey : null;
-  const notesViewUrl = notesKey ? getDownloadUrl(notesKey, "inline") : null;
-  const notesDownloadUrl = notesKey
-    ? getDownloadUrl(notesKey, "attachment")
-    : null;
+  const notesBaseUrl = `/api/content-notes/${encodeURIComponent(courseSlug)}/${parsed}`;
+  const notesViewUrl = notesKey ? notesBaseUrl : null;
+  const notesDownloadUrl = notesKey ? `${notesBaseUrl}?download` : null;
 
   return (
     <DayDetail
@@ -59,6 +68,7 @@ export default async function Page({
       questions={questions}
       notesViewUrl={notesViewUrl}
       notesDownloadUrl={notesDownloadUrl}
+      initialTab={initialTab}
     />
   );
 }

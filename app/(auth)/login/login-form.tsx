@@ -129,15 +129,15 @@ export function LoginForm({
 
   return (
     <div className="flex flex-col items-center text-center">
-      <LogoMark className="size-11" />
-      <h1 className="mt-6 font-display text-2xl font-extrabold tracking-tight text-ink">
-        Sign in to English Dreams
+      <LogoMark className="size-40" />
+      <h1 className="font-display mt-2 text-3xl font-extrabold tracking-tight text-ink">
+        Sign in
       </h1>
       <p className="mt-2 text-sm text-mute">
         Use the account your administrator created for you.
       </p>
 
-      <div className="mt-8 w-full space-y-3">
+      {/* <div className="mt-8 w-full space-y-3">
         <Button
           type="button"
           variant="outline"
@@ -152,7 +152,7 @@ export function LoginForm({
           )}
           Continue with Google
         </Button>
-      </div>
+      </div> */}
 
       <div className="my-6 flex w-full items-center gap-4">
         <span className="h-px flex-1 bg-border" />

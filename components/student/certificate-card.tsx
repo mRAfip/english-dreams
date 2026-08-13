@@ -64,8 +64,8 @@ export function CertificateView({
       met: journey.totalDays > 0 && journey.daysCompleted >= journey.totalDays,
     },
     {
-      label: "Sit every weekend paper",
-      detail: "Two graded papers per week",
+      label: "Sit every assessment",
+      detail: "Two graded assessments per week",
       done: satAssessments.length,
       total: quizzes.length,
       met: satAssessments.length >= quizzes.length,

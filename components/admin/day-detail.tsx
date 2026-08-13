@@ -26,6 +26,8 @@ import {
 } from "@/types/content";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/content/status";
 
+export type DayDetailTab = "videos" | "notes" | "task";
+
 // Admin > Content > Day detail — author the day's material as tabs (Videos,
 // Notes, Task) rather than one long scroll. Video + notes upload directly to R2;
 // the serving URLs are resolved server-side and passed in.
@@ -39,6 +41,7 @@ export function DayDetail({
   questions,
   notesViewUrl,
   notesDownloadUrl,
+  initialTab,
 }: {
   course: Course;
   day: CurriculumDay;
@@ -48,6 +51,7 @@ export function DayDetail({
   questions: TaskQuestion[];
   notesViewUrl: string | null;
   notesDownloadUrl: string | null;
+  initialTab: DayDetailTab;
 }) {
   return (
     <div className="mx-auto max-w-4xl">
@@ -78,7 +82,7 @@ export function DayDetail({
 
         <div className="p-4 sm:p-6">
           {/* Material — one tab per kind so authoring stays focused. */}
-          <Tabs defaultValue="videos">
+          <Tabs defaultValue={initialTab}>
             <TabsList className="w-full">
               <TabTrigger value="videos" icon={Video} label="Videos" status={day.video.status} />
               <TabTrigger value="notes" icon={FileText} label="Notes" status={day.notes.status} />
@@ -152,6 +156,7 @@ export function DayDetail({
                 courseSlug={course.slug}
                 dayNumber={day.dayNumber}
                 questions={questions}
+                status={day.task.status}
               />
             </TabsContent>
           </Tabs>

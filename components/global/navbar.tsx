@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, LifeBuoy, Menu, Search } from "lucide-react";
 import { UserMenu } from "@/components/global/user-menu";
 import { NotificationBell } from "@/components/global/notification-bell";
+import { Logo } from "@/components/global/logo";
 import { ROLE_HOME, ROLE_LABEL } from "@/lib/auth/roles";
 import type { CurrentUser } from "@/lib/auth/guards";
 
@@ -28,7 +29,7 @@ export function Navbar({
   const home = ROLE_HOME[user.role];
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-transparent bg-card px-4 md:border-border sm:px-6">
+    <header className="z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-transparent bg-transparent px-4 md:bg-card md:border-border sm:px-6">
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
@@ -43,25 +44,32 @@ export function Navbar({
           aria-label="Breadcrumb"
           className="flex min-w-0 items-center gap-1.5"
         >
-          <Link
-            href={home}
-            className="hidden shrink-0 text-sm text-mute transition-colors hover:text-ink sm:block"
-          >
-            {ROLE_LABEL[user.role]}
-          </Link>
-          {pageTitle && (
-            <>
-              <ChevronRight className="hidden size-3.5 shrink-0 text-mute sm:block" />
-              <span className="truncate text-sm font-semibold text-ink">
-                {pageTitle}
-              </span>
-            </>
-          )}
+          {/* Logo on mobile view (hidden on sm+) */}
+          <div className="block sm:hidden">
+            <Logo className="h-12 w-28" />
+          </div>
+
+          {/* Breadcrumb path on sm+ views (hidden on mobile) */}
+          <div className="hidden sm:flex items-center gap-1.5 min-w-0">
+            <Link
+              href={home}
+              className="shrink-0 text-sm text-mute transition-colors hover:text-ink"
+            >
+              {ROLE_LABEL[user.role]}
+            </Link>
+            {pageTitle && (
+              <>
+                <ChevronRight className="size-3.5 shrink-0 text-mute" />
+                <span className="truncate text-sm font-semibold text-ink">
+                  {pageTitle}
+                </span>
+              </>
+            )}
+          </div>
         </nav>
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <SearchTrigger />
         <NotificationBell user={user} />
         <UserMenu user={user} />
       </div>
@@ -73,19 +81,4 @@ export function Navbar({
  * Visual affordance only for now — the command palette it should open isn't
  * built yet, so it's disabled rather than a button that silently does nothing.
  */
-function SearchTrigger() {
-  return (
-    <button
-      type="button"
-      disabled
-      title="Search — coming soon"
-      className="hidden h-9 w-56 cursor-not-allowed items-center gap-2 rounded-lg border border-border px-3 text-sm text-mute md:flex"
-    >
-      <Search className="size-4 shrink-0" />
-      <span className="flex-1 text-left">Search</span>
-      <kbd className="rounded border border-border px-1.5 py-0.5 font-sans text-[10px] text-mute">
-        ⌘K
-      </kbd>
-    </button>
-  );
-}
+

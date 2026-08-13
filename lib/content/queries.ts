@@ -60,6 +60,7 @@ type QuizRow = {
   day: "saturday" | "sunday";
   kind: "practice" | "assessment";
   title: string;
+  duration_minutes: number;
   status: ContentStatus;
   content_quiz_questions: { count: number }[] | null;
 };
@@ -74,7 +75,7 @@ type WeekRow = {
 };
 
 const WEEK_SELECT =
-  "id, week_number, title, focus, content_days(id, weekday, title, task_title, task_prompt, task_status, content_assets(kind, r2_key, file_name, duration_min, status), content_day_videos(id, position, title, description, r2_key, thumbnail_key, file_name, duration_min, status), task_questions(count)), content_quizzes(id, day, kind, title, status, content_quiz_questions(count))";
+  "id, week_number, title, focus, content_days(id, weekday, title, task_title, task_prompt, task_status, content_assets(kind, r2_key, file_name, duration_min, status), content_day_videos(id, position, title, description, r2_key, thumbnail_key, file_name, duration_min, status), task_questions(count)), content_quizzes(id, day, kind, title, duration_minutes, status, content_quiz_questions(count))";
 
 /**
  * The week's two weekend papers. A DB row is used when the admin has created
@@ -89,7 +90,7 @@ function mapQuizzes(week: WeekRow): WeekendQuiz[] {
   const build = (day: "saturday" | "sunday"): WeekendQuiz => {
     const row = byDay(day);
     const slug = `w${week.week_number}-${day === "saturday" ? "sat" : "sun"}`;
-    const defaultTitle = `Week ${week.week_number} ${day === "saturday" ? "Saturday" : "Sunday"} paper`;
+    const defaultTitle = `Week ${week.week_number} Assessment ${day === "saturday" ? "1" : "2"}`;
     if (!row) {
       return {
         id: slug,
@@ -97,6 +98,7 @@ function mapQuizzes(week: WeekRow): WeekendQuiz[] {
         day,
         title: defaultTitle,
         kind: "assessment",
+        durationMinutes: 30,
         questionCount: 0,
         status: "empty",
       };
@@ -107,6 +109,7 @@ function mapQuizzes(week: WeekRow): WeekendQuiz[] {
       day,
       title: row.title || defaultTitle,
       kind: "assessment",
+      durationMinutes: row.duration_minutes,
       questionCount: row.content_quiz_questions?.[0]?.count ?? 0,
       status: row.status,
     };
@@ -373,7 +376,7 @@ export async function getAdminQuiz(
   const { data: quiz } = await supabase
     .from("content_quizzes")
     .select(
-      "id, day, kind, title, status, content_quiz_questions(id, position, prompt, options, correct_index, explanation)",
+      "id, day, kind, title, duration_minutes, status, content_quiz_questions(id, position, prompt, options, answer_mode, correct_index, correct_indices, explanation)",
     )
     .eq("week_id", week.id)
     .eq("day", day)
@@ -387,6 +390,7 @@ export async function getAdminQuiz(
       day,
       kind,
       title: `Week ${weekNumber} ${kind}`,
+      durationMinutes: 30,
       status: "empty",
       questions: [],
     };
@@ -397,7 +401,9 @@ export async function getAdminQuiz(
     position: number;
     prompt: string;
     options: string[];
+    answer_mode: "single" | "multiple" | "true_false";
     correct_index: number;
+    correct_indices: number[];
     explanation: string;
   };
   const questions: QuizQuestion[] = ((quiz.content_quiz_questions ?? []) as QRow[])
@@ -407,7 +413,11 @@ export async function getAdminQuiz(
       id: q.id,
       prompt: q.prompt,
       options: Array.isArray(q.options) ? q.options : [],
-      correctIndex: q.correct_index,
+      answerMode: q.answer_mode ?? "single",
+      correctIndices:
+        Array.isArray(q.correct_indices) && q.correct_indices.length
+          ? q.correct_indices
+          : [q.correct_index],
       explanation: q.explanation,
     }));
 
@@ -418,6 +428,7 @@ export async function getAdminQuiz(
     day,
     kind: (quiz.kind as QuizKind) ?? kind,
     title: (quiz.title as string) || `Week ${weekNumber} ${kind}`,
+    durationMinutes: quiz.duration_minutes as number,
     status: quiz.status as AdminQuiz["status"],
     questions,
   };

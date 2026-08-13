@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   CheckCircle2,
   Clock3,
-  Download,
   Eye,
   FileText,
   Lock,
@@ -121,7 +120,10 @@ export function DayModuleCard({
                 {badge.label}
               </Badge>
               <Button variant="ghost" size="sm" asChild>
-                <Link href={dayHref} aria-label={`Open ${day.video.title}`}>
+                <Link
+                  href={`${dayHref}?tab=videos`}
+                  aria-label={`Open ${day.video.title}`}
+                >
                   <Eye />
                   View
                 </Link>
@@ -154,7 +156,7 @@ export function DayModuleCard({
             done={day.video.watched}
             action={
               <Button variant="soft" size="sm" asChild>
-                <Link href={dayHref}>
+                <Link href={`${dayHref}?tab=videos`}>
                   <PlayCircle />
                   {day.video.watched ? "Watch again" : "Watch class"}
                 </Link>
@@ -170,10 +172,10 @@ export function DayModuleCard({
             meta="PDF handout"
             done={day.notes.downloaded}
             action={
-              <Button variant="secondary" size="sm" asChild>
-                <Link href={dayHref}>
-                  <Download />
-                  Download
+              <Button variant="soft" size="sm" asChild>
+                <Link href={`${dayHref}?tab=notes`}>
+                  <Eye />
+                  View
                 </Link>
               </Button>
             }
@@ -192,7 +194,7 @@ export function DayModuleCard({
                 variant={state === "redo" ? "destructive" : "soft"}
                 asChild
               >
-                <Link href={dayHref}>
+                <Link href={`${dayHref}?tab=task`}>
                   <Send />
                   {state === "redo"
                     ? "Redo task"

@@ -11,7 +11,10 @@ import { createClient } from "@/lib/supabase/server";
 import { participantInfo } from "@/lib/inbox/participants";
 import { getDownloadUrl } from "@/lib/r2/presign";
 import { isR2Configured } from "@/lib/r2/client";
-import { StudentDayDetail } from "@/components/student/student-day-detail";
+import {
+  StudentDayDetail,
+  type StudentDayDetailTab,
+} from "@/components/student/student-day-detail";
 import type { Role } from "@/types/role";
 
 // Student > Learning path > one day — watch the class, download the notes,
@@ -26,6 +29,11 @@ export default async function Page(
 ) {
   const user = await requireRole("student");
   const { dayNumber } = await props.params;
+  const requestedTab = (await props.searchParams).tab;
+  const initialTab: StudentDayDetailTab =
+    requestedTab === "notes" || requestedTab === "task" || requestedTab === "videos"
+      ? requestedTab
+      : "videos";
 
   const n = Number(dayNumber);
   if (!Number.isInteger(n) || n < 1) notFound();
@@ -70,11 +78,9 @@ export default async function Page(
     content.day.notes.assetKey
       ? content.day.notes.assetKey
       : null;
-  // Inline for reading in a new tab; attachment forces a save.
-  const notesViewUrl = notesKey ? getDownloadUrl(notesKey, "inline") : null;
-  const notesDownloadUrl = notesKey
-    ? getDownloadUrl(notesKey, "attachment")
-    : null;
+  const notesBaseUrl = `/api/content-notes/${encodeURIComponent(journey.course.slug)}/${n}`;
+  const notesViewUrl = notesKey ? notesBaseUrl : null;
+  const notesDownloadUrl = notesKey ? `${notesBaseUrl}?download` : null;
 
   // Task: questions, the student's submission, and the review thread.
   const [questions, submission] = await Promise.all([
@@ -108,6 +114,7 @@ export default async function Page(
       videos={videos}
       notesViewUrl={notesViewUrl}
       notesDownloadUrl={notesDownloadUrl}
+      initialTab={initialTab}
       task={{ questions, submission, meId: user.id, comments, threadAuthors }}
     />
   );

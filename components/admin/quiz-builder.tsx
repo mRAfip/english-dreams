@@ -17,11 +17,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { saveQuiz, setQuizPublished } from "@/lib/quiz/actions";
-import type { AdminQuiz, QuizQuestion } from "@/types/quiz";
+import type { AdminQuiz, QuizAnswerMode, QuizQuestion } from "@/types/quiz";
 
 // Admin > Content > weekend quiz builder. Author the paper's title and its
-// multiple-choice questions (2–5 options each, one correct), then publish it.
+// single- and multiple-answer questions (2–5 options each), then publish it.
 // Saved as one batched write; publish is a separate toggle.
 
 const LETTERS = ["A", "B", "C", "D", "E"];
@@ -29,13 +30,22 @@ const MIN_OPTIONS = 2;
 const MAX_OPTIONS = 5;
 
 function blankQuestion(): QuizQuestion {
-  return { prompt: "", options: ["", ""], correctIndex: 0, explanation: "" };
+  return {
+    prompt: "",
+    options: ["", ""],
+    answerMode: "single",
+    correctIndices: [0],
+    explanation: "",
+  };
 }
 
 export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [title, setTitle] = React.useState(quiz.title);
+  const [durationMinutes, setDurationMinutes] = React.useState(
+    quiz.durationMinutes,
+  );
   const [questions, setQuestions] = React.useState<QuizQuestion[]>(
     quiz.questions.length ? quiz.questions : [blankQuestion()],
   );
@@ -74,27 +84,82 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
       prev.map((q, idx) => {
         if (idx !== qi || q.options.length <= MIN_OPTIONS) return q;
         const options = q.options.filter((_, k) => k !== oi);
-        const correctIndex =
-          q.correctIndex === oi
-            ? 0
-            : q.correctIndex > oi
-              ? q.correctIndex - 1
-              : q.correctIndex;
-        return { ...q, options, correctIndex };
+        const correctIndices = q.correctIndices
+          .filter((index) => index !== oi)
+          .map((index) => (index > oi ? index - 1 : index));
+        return {
+          ...q,
+          options,
+          correctIndices: correctIndices.length ? correctIndices : [0],
+        };
+      }),
+    );
+  }
+
+  function setAnswerMode(qi: number, answerMode: QuizAnswerMode) {
+    setQuestions((prev) =>
+      prev.map((q, idx) =>
+        idx === qi
+          ? answerMode === "true_false"
+            ? {
+                ...q,
+                answerMode,
+                options: ["True", "False"],
+                correctIndices: [0],
+              }
+            : {
+                ...q,
+                answerMode,
+                correctIndices: [q.correctIndices[0] ?? 0],
+              }
+          : q,
+      ),
+    );
+  }
+
+  function toggleCorrect(qi: number, oi: number) {
+    setQuestions((prev) =>
+      prev.map((q, idx) => {
+        if (idx !== qi) return q;
+        if (q.answerMode !== "multiple") return { ...q, correctIndices: [oi] };
+        const selected = q.correctIndices.includes(oi);
+        return {
+          ...q,
+          correctIndices: selected
+            ? q.correctIndices.filter((index) => index !== oi)
+            : [...q.correctIndices, oi].sort((a, b) => a - b),
+        };
       }),
     );
   }
 
   /** Reject empty prompts / blank correct options before saving. */
   function validate(): string | null {
+    if (
+      !Number.isInteger(durationMinutes) ||
+      durationMinutes < 1 ||
+      durationMinutes > 300
+    ) {
+      return "Time limit must be a whole number from 1 to 300 minutes.";
+    }
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.prompt.trim()) return `Question ${i + 1} needs a prompt.`;
       const filled = q.options.filter((o) => o.trim().length > 0);
       if (filled.length < MIN_OPTIONS)
         return `Question ${i + 1} needs at least ${MIN_OPTIONS} options.`;
-      if (!q.options[q.correctIndex]?.trim())
-        return `Question ${i + 1}: the correct option is empty.`;
+      if (filled.length !== q.options.length)
+        return `Question ${i + 1}: fill in or remove every blank option.`;
+      if (q.correctIndices.length === 0)
+        return `Question ${i + 1} needs at least one correct answer.`;
+      if (q.answerMode === "single" && q.correctIndices.length !== 1)
+        return `Question ${i + 1} must have exactly one correct answer.`;
+      if (q.answerMode === "true_false" && q.correctIndices.length !== 1)
+        return `Question ${i + 1} must choose True or False.`;
+      if (q.answerMode === "multiple" && q.correctIndices.length < 2)
+        return `Question ${i + 1} needs at least two correct answers.`;
+      if (q.correctIndices.some((index) => !q.options[index]?.trim()))
+        return `Question ${i + 1}: a correct option is empty.`;
     }
     return null;
   }
@@ -112,6 +177,7 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
         weekNumber: quiz.weekNumber,
         day: quiz.day,
         title: title.trim() || `Week ${quiz.weekNumber} ${quiz.kind}`,
+        durationMinutes,
         questions,
       });
       if (alsoPublish) {
@@ -142,12 +208,12 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
           <div className="flex items-center gap-2">
             <Badge variant="brand">Graded paper</Badge>
             <span className="text-xs capitalize text-mute">
-              Week {quiz.weekNumber} · {quiz.day}
+              Week {quiz.weekNumber} · {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"}
             </span>
             {published ? <Badge variant="positive">Published</Badge> : null}
           </div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-            Weekend quiz
+            Assessment {quiz.day === "saturday" ? "1" : "2"}
           </h1>
         </div>
 
@@ -167,15 +233,29 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
         </div>
       </header>
 
-      {/* Title */}
-      <div className="mt-6 grid max-w-lg gap-2">
-        <Label htmlFor="quiz-title">Title</Label>
-        <Input
-          id="quiz-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={`Week ${quiz.weekNumber} ${quiz.kind}`}
-        />
+      {/* Paper settings */}
+      <div className="mt-6 grid max-w-2xl gap-4 sm:grid-cols-[1fr_12rem]">
+        <div className="grid gap-2">
+          <Label htmlFor="quiz-title">Title</Label>
+          <Input
+            id="quiz-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={`Week ${quiz.weekNumber} ${quiz.kind}`}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="quiz-duration">Time limit (minutes)</Label>
+          <Input
+            id="quiz-duration"
+            type="number"
+            min={1}
+            max={300}
+            step={1}
+            value={Number.isNaN(durationMinutes) ? "" : durationMinutes}
+            onChange={(e) => setDurationMinutes(e.currentTarget.valueAsNumber)}
+          />
+        </div>
       </div>
 
       {error ? (
@@ -211,30 +291,61 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
 
             <div className="mt-3 grid gap-2">
               <Label htmlFor={`prompt-${qi}`}>Prompt</Label>
-              <Input
+              <Textarea
                 id={`prompt-${qi}`}
                 value={q.prompt}
                 onChange={(e) => patch(qi, { prompt: e.target.value })}
                 placeholder="She ____ to the market every Sunday."
+                rows={4}
+                className="resize-y"
               />
             </div>
 
-            {/* Options — click the letter to mark the correct one. */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-mute">Answer type</span>
+              <Button
+                type="button"
+                size="sm"
+                variant={q.answerMode === "single" ? "secondary" : "ghost"}
+                onClick={() => setAnswerMode(qi, "single")}
+              >
+                Single answer
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={q.answerMode === "multiple" ? "secondary" : "ghost"}
+                onClick={() => setAnswerMode(qi, "multiple")}
+              >
+                Multiple answers
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={q.answerMode === "true_false" ? "secondary" : "ghost"}
+                onClick={() => setAnswerMode(qi, "true_false")}
+              >
+                True or false
+              </Button>
+            </div>
+
+            {/* Options — click the letter to mark one or more correct answers. */}
             <div className="mt-4 flex flex-col gap-2">
               <span className="text-xs font-medium text-mute">
-                Options — tap the letter to mark the correct answer
+                Options — tap the letter to mark {q.answerMode === "multiple" ? "each" : "the"} correct answer
               </span>
               {q.options.map((option, oi) => {
-                const correct = q.correctIndex === oi;
+                const correct = q.correctIndices.includes(oi);
                 return (
                   <div key={oi} className="flex items-center gap-2">
                     <button
                       type="button"
                       aria-label={`Mark option ${LETTERS[oi]} correct`}
                       aria-pressed={correct}
-                      onClick={() => patch(qi, { correctIndex: oi })}
+                      onClick={() => toggleCorrect(qi, oi)}
                       className={cn(
-                        "grid size-8 shrink-0 place-items-center rounded-full border text-xs font-bold transition-colors",
+                        "grid size-8 shrink-0 place-items-center border text-xs font-bold transition-colors",
+                        q.answerMode === "multiple" ? "rounded-md" : "rounded-full",
                         correct
                           ? "border-ink bg-primary text-primary-foreground"
                           : "border-border text-mute hover:border-ink",
@@ -246,12 +357,16 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
                       value={option}
                       onChange={(e) => setOption(qi, oi, e.target.value)}
                       placeholder={`Option ${LETTERS[oi]}`}
+                      readOnly={q.answerMode === "true_false"}
                     />
                     <Button
                       variant="ghost"
                       size="icon"
                       aria-label={`Remove option ${LETTERS[oi]}`}
-                      disabled={q.options.length <= MIN_OPTIONS}
+                      disabled={
+                        q.answerMode === "true_false" ||
+                        q.options.length <= MIN_OPTIONS
+                      }
                       onClick={() => removeOption(qi, oi)}
                     >
                       <Trash2 />
@@ -259,7 +374,7 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
                   </div>
                 );
               })}
-              {q.options.length < MAX_OPTIONS ? (
+              {q.answerMode !== "true_false" && q.options.length < MAX_OPTIONS ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -279,11 +394,13 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
                   (shown after marking)
                 </span>
               </Label>
-              <Input
+              <Textarea
                 id={`explain-${qi}`}
                 value={q.explanation}
                 onChange={(e) => patch(qi, { explanation: e.target.value })}
                 placeholder="Why the correct answer is correct."
+                rows={4}
+                className="resize-y"
               />
             </div>
           </article>

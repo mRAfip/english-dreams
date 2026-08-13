@@ -3,10 +3,16 @@ import type { Role } from "@/types/role";
 // The real daily-task model: typed questions authored by admins, student
 // submissions (text + optional audio) and a trainer review thread.
 
-export type TaskQuestionType = "text" | "editing" | "fill_blanks" | "comprehension";
+export type TaskQuestionType =
+  | "text"
+  | "audio"
+  | "editing"
+  | "fill_blanks"
+  | "comprehension";
 
 export const QUESTION_TYPES: TaskQuestionType[] = [
   "text",
+  "audio",
   "editing",
   "fill_blanks",
   "comprehension",
@@ -14,6 +20,7 @@ export const QUESTION_TYPES: TaskQuestionType[] = [
 
 export const QUESTION_TYPE_LABEL: Record<TaskQuestionType, string> = {
   text: "Text answer",
+  audio: "Audio answer",
   editing: "Find & fix mistakes",
   fill_blanks: "Fill in the blanks",
   comprehension: "Reading comprehension",

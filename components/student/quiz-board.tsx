@@ -89,7 +89,7 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
       <div>
         <header className="border-b border-border pb-6">
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-            Weekend papers
+            Weekly assessments
           </h1>
         </header>
         <div className="py-16 text-center text-sm text-mute">
@@ -110,10 +110,10 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
       <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1.5">
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
-            Weekend papers
+            Weekly assessments
           </h1>
           <p className="text-sm text-body">
-            Two graded papers a week — both count toward the leaderboard. Each is
+            Two graded assessments a week — both count toward the leaderboard. Each is
             timed and can only be sat once. Pass mark is {PASS_MARK}%.
           </p>
         </div>
@@ -134,7 +134,7 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
         <StatTile
           label="Average"
           value={average === null ? "—" : `${average}%`}
-          hint={`across ${done.length} sat ${done.length === 1 ? "paper" : "papers"}`}
+          hint={`across ${done.length} sat ${done.length === 1 ? "assessment" : "assessments"}`}
           tone={average !== null && average >= PASS_MARK ? "positive" : "neutral"}
           icon={TrendingUp}
         />
@@ -148,7 +148,7 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
         <StatTile
           label="Missed"
           value={String(missed.length)}
-          hint={missed.length === 0 ? "you've sat every paper" : "papers you skipped"}
+          hint={missed.length === 0 ? "you've sat every assessment" : "assessments you skipped"}
           tone={missed.length === 0 ? "positive" : "negative"}
           icon={XCircle}
         />
@@ -179,8 +179,8 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
           </h2>
           <p className="text-sm text-body">
             {week.state === "locked"
-              ? "These papers unlock when you reach this week."
-              : "Both papers are graded — your combined marks set your place on this week's leaderboard."}
+              ? "These assessments unlock when you reach this week."
+              : "Both assessments are graded — your combined marks set your place on this week's leaderboard."}
           </p>
         </div>
 
@@ -264,12 +264,12 @@ function QuizCard({
               <ListChecks className="size-4" />
             )}
           </span>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-ink">{quiz.title}</div>
-            <div className="text-xs capitalize text-mute">
-              {quiz.day} · graded
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-ink">{quiz.title}</div>
+              <div className="text-xs capitalize text-mute">
+                {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"} · graded
+              </div>
             </div>
-          </div>
         </div>
 
         <Badge variant="brand">Graded</Badge>

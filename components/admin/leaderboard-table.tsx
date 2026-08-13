@@ -163,8 +163,8 @@ export function LeaderboardTable({ boards }: { boards: WeeklyLeaderboard[] }) {
                       <TableRow className="hover:bg-transparent">
                         <TableHead className="w-16">Rank</TableHead>
                         <TableHead>Student</TableHead>
-                        <TableHead className="text-right">Saturday</TableHead>
-                        <TableHead className="text-right">Sunday</TableHead>
+                        <TableHead className="text-right">Assessment 1</TableHead>
+                        <TableHead className="text-right">Assessment 2</TableHead>
                         <TableHead className="text-right">Total</TableHead>
                       </TableRow>
                     </TableHeader>

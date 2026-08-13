@@ -76,9 +76,10 @@ export function SidebarShell({
     // Pinned to the viewport (out of flow) so the app never window-scrolls,
     // regardless of how tall the content grows — only the content <main>
     // scrolls. Each column carries min-h-0 so the internal scroll resolves.
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-card">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-gradient-to-b from-[#043556]/25 via-[#043556]/5 to-[#f8fafc]">
+
       {/* Brand hairline across the top of the whole app. */}
-      <div className="h-1 shrink-0 bg-primary" />
+      <div className="hidden md:block h-1 shrink-0 bg-primary" />
 
       <div className="flex min-h-0 flex-1">
         {/* Desktop sidebar — hidden on phones in favour of the tab bar. */}
@@ -127,7 +128,7 @@ export function SidebarShell({
             onMenuClick={() => setDrawerOpen(true)}
           />
           {/* White on phones (seamless with the top bar), sage from md up. */}
-          <main className="min-h-0 flex-1 overflow-y-auto bg-card md:bg-sage">
+          <main className="z-10 min-h-0 flex-1 overflow-y-auto bg-transparent md:bg-sage">
             {/* Extra bottom padding on phones clears the floating tab bar. */}
             <div className="mx-auto w-full max-w-300 px-4 pt-5 pb-28 sm:px-6 sm:pt-6 md:px-8 md:pt-8 md:pb-8">
               {children}
@@ -155,6 +156,8 @@ export function SidebarShell({
   );
 }
 
+import { Logo } from "@/components/global/logo";
+
 function WorkspaceHeader({
   user,
   collapsed,
@@ -163,30 +166,20 @@ function WorkspaceHeader({
   collapsed: boolean;
 }) {
   return (
-    <div className="flex h-16 shrink-0 items-center px-3">
-      <div
-        className={cn(
-          "flex h-11 w-full items-center gap-2.5 rounded-xl px-2",
-          collapsed && "justify-center px-0",
-        )}
-      >
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-pale">
-          <LogoMark className="size-5" />
-        </span>
-        {!collapsed && (
-          <>
-            <span className="min-w-0 flex-1 text-left">
-              <span className="block truncate font-display text-[15px] font-extrabold tracking-tight text-ink">
-                English Dreams
-              </span>
-              <span className="block truncate text-xs text-mute">
-                {ROLE_LABEL[user.role]} workspace
-              </span>
-            </span>
-            <ChevronsUpDown className="size-4 shrink-0 text-mute" />
-          </>
-        )}
-      </div>
+    <div className="flex h-18 shrink-0 items-center px-4 border-b border-border">
+      {collapsed ? (
+        <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-primary-pale">
+          <LogoMark className="size-6.5" />
+        </div>
+      ) : (
+        <div className="flex w-full items-center justify-between gap-2 pl-1">
+          <div className="flex flex-col min-w-0">
+            <Logo className="h-12 w-40" />
+
+          </div>
+          <ChevronsUpDown className="size-4 shrink-0 text-mute" />
+        </div>
+      )}
     </div>
   );
 }
@@ -387,22 +380,15 @@ function MobileDrawer({
         aria-modal="true"
         aria-label="Navigation"
         className={cn(
-          "absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col border-r border-border bg-neutral-950 shadow-xl transition-transform duration-200 ease-out",
+          "absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col border-r border-border bg-card shadow-xl transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between px-4">
-          <div className="flex items-center gap-2.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary-pale">
-              <LogoMark className="size-5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate font-display text-[15px] font-extrabold tracking-tight text-ink">
-                English Dreams
-              </span>
-              <span className="block truncate text-xs text-mute">
-                {ROLE_LABEL[user.role]} workspace
-              </span>
+        <div className="flex h-18 shrink-0 items-center justify-between px-4 border-b border-border">
+          <div className="flex flex-col min-w-0 pl-1">
+            <Logo className="h-8.5 w-30" />
+            <span className="mt-0.5 truncate text-[10px] font-bold uppercase tracking-wider text-mute pl-0.5">
+              {ROLE_LABEL[user.role]} workspace
             </span>
           </div>
           <button

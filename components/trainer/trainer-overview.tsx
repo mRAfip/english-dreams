@@ -109,24 +109,23 @@ export function TrainerOverview({
   const attendance = releasedDays === 0 ? 0 : Math.round((closedDays / releasedDays) * 100);
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Header — greeting on the left, the one action that clears the day on
           the right. */}
-      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+      <header className="flex flex-row items-center justify-between gap-4 border-b border-border pb-4 sm:pb-6">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <h1 className="truncate font-display text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight text-ink">
             Good morning, {name}
           </h1>
-          <p className="text-sm text-body">
-            Monday, 20 July 2026 · {pending.length} submissions waiting on your
-            feedback
+          <p className="truncate text-[10px] sm:text-xs md:text-sm text-body">
+            Monday, 20 July 2026 · {pending.length} submissions
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button asChild>
+          <Button asChild className="h-8 sm:h-11 px-3 sm:px-6 text-[10px] sm:text-sm rounded-lg sm:rounded-xl">
             <Link href="/trainer/review-tasks">
-              <ClipboardCheck />
+              <ClipboardCheck className="mr-1 size-3.5 sm:size-4" />
               Start reviewing
             </Link>
           </Button>
@@ -136,7 +135,7 @@ export function TrainerOverview({
       {/* 1. Stat row */}
       <section
         aria-label="Today's numbers"
-        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
           label="Awaiting review"
@@ -178,14 +177,14 @@ export function TrainerOverview({
           <div className="flex items-end justify-between gap-4">
             <h2
               id="queue-heading"
-              className="font-display text-xl font-extrabold text-ink"
+              className="font-display text-base sm:text-lg font-extrabold text-ink"
             >
               Review queue
             </h2>
-            <Button variant="tertiary" size="sm" asChild>
+            <Button variant="tertiary" size="sm" asChild className="text-xs h-8 px-3">
               <Link href="/trainer/review-tasks">
                 Open queue
-                <ArrowUpRight />
+                <ArrowUpRight className="ml-1 size-3.5" />
               </Link>
             </Button>
           </div>
@@ -205,7 +204,7 @@ export function TrainerOverview({
             {pending.length > QUEUE_PREVIEW && (
               <Link
                 href="/trainer/review-tasks"
-                className="rounded-xl border border-dashed border-border px-5 py-3 text-center text-sm font-semibold text-ink hover:bg-secondary"
+                className="rounded-xl border border-dashed border-border px-4 py-2.5 text-center text-xs sm:text-sm font-semibold text-ink hover:bg-secondary"
               >
                 {pending.length - QUEUE_PREVIEW} more waiting
               </Link>
@@ -219,21 +218,21 @@ export function TrainerOverview({
             <div className="flex items-end justify-between gap-4">
               <h2
                 id="attention-heading"
-                className="font-display text-xl font-extrabold text-ink"
+                className="font-display text-base sm:text-lg font-extrabold text-ink"
               >
                 Needs chasing
               </h2>
-              <Button variant="tertiary" size="sm" asChild>
+              <Button variant="tertiary" size="sm" asChild className="text-xs h-8 px-3">
                 <Link href="/trainer/assigned-students">
                   Roster
-                  <ArrowUpRight />
+                  <ArrowUpRight className="ml-1 size-3.5" />
                 </Link>
               </Button>
             </div>
 
-            <div className="mt-4 rounded-xl border border-border bg-card p-6">
+            <div className="mt-4 rounded-xl border border-border bg-card p-4 sm:p-6">
               {flagged.length === 0 ? (
-                <p className="text-sm text-body">
+                <p className="text-xs sm:text-sm text-body">
                   Everyone is on track this week.
                 </p>
               ) : (
@@ -249,12 +248,12 @@ export function TrainerOverview({
           <section aria-labelledby="week-heading">
             <h2
               id="week-heading"
-              className="font-display text-xl font-extrabold text-ink"
+              className="font-display text-base sm:text-lg font-extrabold text-ink"
             >
               Your week
             </h2>
 
-            <div className="mt-4 flex flex-col gap-4 rounded-xl border border-border bg-card p-6">
+            <div className="mt-4 flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6 font-medium">
               <WeekBar closed={closedDays} released={releasedDays} />
               <dl className="flex flex-col gap-3 text-sm">
                 <Line
@@ -285,24 +284,24 @@ function QueueRow({ submission }: { submission: Submission }) {
   return (
     <Link
       href="/trainer/review-tasks"
-      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 hover:border-ink sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-5 hover:border-primary transition-all sm:flex-row sm:items-center sm:justify-between"
     >
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar>
-          <AvatarFallback>{initials(submission.studentName)}</AvatarFallback>
+      <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+        <Avatar className="size-8 sm:size-10">
+          <AvatarFallback className="text-[10px] sm:text-xs">{initials(submission.studentName)}</AvatarFallback>
         </Avatar>
-        <div className="min-w-0">
-          <div className="font-semibold text-ink">{submission.studentName}</div>
-          <div className="truncate text-sm text-body">
+        <div className="min-w-0 flex-1">
+          <div className="text-xs sm:text-sm font-semibold text-ink">{submission.studentName}</div>
+          <div className="truncate text-[10px] sm:text-xs text-body">
             Day {submission.dayNumber} · {submission.taskTitle}
           </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-mute">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[9px] sm:text-xs text-mute">
             <span>{submission.submittedAt}</span>
             {submission.assets.map((asset) => {
               const Icon = ASSET_ICON[asset.kind];
               return (
-                <span key={asset.id} className="flex items-center gap-1">
-                  <Icon className="size-3.5" />
+                <span key={asset.id} className="flex items-center gap-0.5">
+                  <Icon className="size-3 sm:size-3.5" />
                   {asset.meta}
                 </span>
               );
@@ -311,11 +310,11 @@ function QueueRow({ submission }: { submission: Submission }) {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
-        <Badge variant={sla.variant}>{sla.label}</Badge>
-        <span className="text-xs text-mute">
+      <div className="flex items-center gap-2 sm:flex-col sm:items-end justify-between sm:justify-start border-t border-border/40 sm:border-t-0 pt-2 sm:pt-0 shrink-0">
+        <Badge variant={sla.variant} className="text-[9px] sm:text-xs px-1.5 py-0.5">{sla.label}</Badge>
+        <span className="text-[9px] sm:text-xs text-mute font-medium">
           {waitingLabel(submission.hoursWaiting)}
-          {submission.late && " · submitted late"}
+          {submission.late && " · late"}
         </span>
       </div>
     </Link>
@@ -328,22 +327,21 @@ function FlaggedStudent({ student }: { student: AssignedStudent }) {
   const high = attentionSeverity(student) === "high";
 
   return (
-    <li className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <div className="text-sm font-semibold text-ink">{student.name}</div>
-        <div className="text-xs text-mute">
-          Week {student.week} · day {student.daysCompleted} of{" "}
-          {student.totalDays}
+    <li className="flex items-center justify-between gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="text-xs sm:text-sm font-semibold text-ink leading-tight">{student.name}</div>
+        <div className="text-[10px] sm:text-xs text-mute mt-0.5">
+          Week {student.week} · day {student.daysCompleted} of {student.totalDays}
         </div>
-        <Badge variant={high ? "negative" : "warning"} className="mt-1.5">
-          <AlertTriangle className="size-3.5" />
+        <Badge variant={high ? "negative" : "warning"} className="mt-1.5 text-[9px] sm:text-[10px] px-1.5 py-0.5 gap-0.5">
+          <AlertTriangle className="size-2.5 sm:size-3" />
           {reason}
         </Badge>
       </div>
       {/* The useful reply to drifting is a message, so link straight there. */}
-      <Button variant="outline" size="icon" asChild>
+      <Button variant="outline" size="icon" asChild className="size-7 sm:size-9 shrink-0">
         <Link href="/inbox" aria-label={`Message ${student.name}`}>
-          <MessageSquare />
+          <MessageSquare className="size-3.5 sm:size-4" />
         </Link>
       </Button>
     </li>
@@ -373,22 +371,22 @@ function StatCard({
   }[tone];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-sm text-body">{label}</span>
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-1.5">
+        <span className="text-[10px] sm:text-xs md:text-sm font-medium text-body line-clamp-1">{label}</span>
         <span
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-full",
+            "flex size-6 sm:size-8 shrink-0 items-center justify-center rounded-full",
             chip,
           )}
         >
-          <Icon className="size-4" />
+          <Icon className="size-3 sm:size-4" />
         </span>
       </div>
-      <div className="mt-3 font-display text-3xl font-extrabold tabular-nums text-ink">
+      <div className="mt-2 font-display text-lg sm:text-2xl md:text-3xl font-extrabold tabular-nums text-ink leading-none">
         {value}
       </div>
-      <div className="mt-1 text-xs text-mute">{hint}</div>
+      <div className="mt-1 text-[9px] sm:text-[11px] md:text-xs text-mute line-clamp-1">{hint}</div>
     </div>
   );
 }
@@ -402,8 +400,8 @@ function WeekBar({ closed, released }: { closed: number; released: number }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm text-body">Days closed out</span>
-        <span className="text-sm font-semibold tabular-nums text-ink">
+        <span className="text-xs sm:text-sm text-body">Days closed out</span>
+        <span className="text-xs sm:text-sm font-semibold tabular-nums text-ink">
           {closed}/{released}
         </span>
       </div>
@@ -427,8 +425,8 @@ function WeekBar({ closed, released }: { closed: number; released: number }) {
 function Line({ term, detail }: { term: string; detail: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-body">{term}</dt>
-      <dd className="font-semibold tabular-nums text-ink">{detail}</dd>
+      <dt className="text-xs sm:text-sm text-body">{term}</dt>
+      <dd className="text-xs sm:text-sm font-semibold tabular-nums text-ink">{detail}</dd>
     </div>
   );
 }

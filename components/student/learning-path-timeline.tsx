@@ -152,16 +152,20 @@ export function LearningPathTimeline({ journey }: { journey: StudentJourney }) {
             task can all be acted on without leaving the week. */}
         <div className="mt-5 flex flex-col gap-3">
           {week.days.map((day) => (
-            <DayModuleCard key={day.dayNumber} day={day} compact />
+            <DayModuleCard
+              key={day.dayNumber}
+              day={day}
+              compact
+            />
           ))}
         </div>
 
         {/* Weekend */}
         <div className="mt-8">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-ink">Weekend</h3>
+            <h3 className="text-sm font-semibold text-ink">Assessments</h3>
             <span className="text-xs text-mute">
-              Two papers · not counted toward the {totalDays}-day path
+              Two assessments · not counted toward the {totalDays}-day path
             </span>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -232,7 +236,7 @@ function QuizCard({ quiz, onSit }: { quiz: StudentQuiz; onSit: () => void }) {
           <div>
             <div className="text-sm font-semibold text-ink">{quiz.title}</div>
             <div className="text-xs capitalize text-mute">
-              {quiz.day} · {quiz.kind}
+              {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"} · {quiz.kind}
             </div>
           </div>
         </div>

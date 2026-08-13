@@ -23,9 +23,6 @@ import {
 // have travelled, so the student view ignores status entirely and gates on
 // `dayNumber <= currentDay`.
 
-/** Consecutive days with a submitted task. Reset by any missed day. Scaffold. */
-const STREAK_DAYS = 12;
-
 /** Where a teaching day sits relative to today. */
 export type DayState = "done" | "today" | "locked";
 
@@ -36,6 +33,7 @@ export type DayProgress = {
   taskCompleted: boolean;
   /** content_day_videos ids the student has played. */
   videoWatchedParts: string[];
+  updatedAt?: string;
 };
 
 /** What has happened to the day's homework. */
@@ -98,6 +96,7 @@ export type StudentQuiz = {
   day: "saturday" | "sunday";
   title: string;
   kind: "practice" | "assessment";
+  durationMinutes: number;
   questionCount: number;
   state: QuizState;
   /** Percentage. Null unless the paper was sat. */
@@ -121,6 +120,8 @@ export type StudentJourney = {
   course: Course | null;
   /** The latest released teaching day. 0 when nothing is published yet. */
   currentDay: number;
+  /** The uncompleted active day number, 0 if caught up */
+  activeDay: number;
   /** Released teaching days behind the current one. */
   daysCompleted: number;
   currentWeek: number;
@@ -186,6 +187,7 @@ function mapStudentQuiz(
     day: quiz.day,
     title: quiz.title,
     kind: quiz.kind,
+    durationMinutes: quiz.durationMinutes,
     questionCount: quiz.questionCount,
     state,
     score: attempt?.score ?? null,
@@ -199,6 +201,79 @@ function isReleased(day: CurriculumDay): boolean {
     day.notes.status === "published" ||
     day.task.status === "published"
   );
+}
+
+/**
+ * Build a student's journey from their course's curriculum (the admin-authored
+ * content tables). The course's shape — weeks, days, video/notes/task — is live
+ * data; access is gated on publish status (unpublished days read as locked).
+ *
+ * Pass `course: null` with an empty curriculum for an unassigned student: every
+ * count comes out zero and the screens show the "no course yet" state.
+ */
+function calculateProgressStreak(progressByDay: Map<number, DayProgress>): number {
+  const dates: string[] = [];
+  for (const p of progressByDay.values()) {
+    if (p.taskCompleted && p.updatedAt) {
+      dates.push(p.updatedAt);
+    }
+  }
+
+  if (dates.length === 0) return 0;
+
+  // Helper to convert ISO string to YYYY-MM-DD in local system time
+  const toLocalDateStr = (isoString: string): string => {
+    const d = new Date(isoString);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const date = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${date}`;
+  };
+
+  // Convert to local date strings and remove duplicates
+  const uniqueDates = Array.from(new Set(dates.map(toLocalDateStr)))
+    .sort((a, b) => b.localeCompare(a));
+
+  if (uniqueDates.length === 0) return 0;
+
+  // Get current date string and yesterday date string in local timezone
+  const todayStr = toLocalDateStr(new Date().toISOString());
+  
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = toLocalDateStr(yesterday.toISOString());
+
+  const latestDate = uniqueDates[0];
+
+  // If the latest completed task was not today and not yesterday, streak is broken
+  if (latestDate !== todayStr && latestDate !== yesterdayStr) {
+    return 0;
+  }
+
+  const parseLocalDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  let streak = 0;
+  let currentDate = parseLocalDate(latestDate);
+
+  for (const dateStr of uniqueDates) {
+    const d = parseLocalDate(dateStr);
+    const diffTime = Math.abs(currentDate.getTime() - d.getTime());
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      streak = 1;
+    } else if (diffDays === 1) {
+      streak += 1;
+      currentDate = d;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
 }
 
 /**
@@ -327,12 +402,15 @@ export function buildJourney(
     };
   });
 
+  const streakDays = calculateProgressStreak(progressByDay);
+
   return {
     course,
     currentDay,
+    activeDay,
     daysCompleted,
     currentWeek,
-    streakDays: STREAK_DAYS,
+    streakDays,
     totalDays,
     totalWeeks,
     weeks,

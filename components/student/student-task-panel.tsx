@@ -105,6 +105,16 @@ export function StudentTaskPanel({
   }
 
   async function handleSubmit() {
+    const missingAudio = questions.some((question) => {
+      if (question.type !== "audio") return false;
+      const answer = answers[slotKey(question.id, null)];
+      return !answer?.file && !answer?.existing;
+    });
+    if (missingAudio) {
+      toast.error("Record or attach audio for every audio question");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const inputs: AnswerInput[] = [];
@@ -225,9 +235,10 @@ export function StudentTaskPanel({
           ) : (
             <div className="mt-3">
               <AnswerField
-                label="Your answer"
+                label={q.type === "audio" ? "Your audio answer" : "Your answer"}
                 editable={editable}
                 state={answers[slotKey(q.id, null)]}
+                audioOnly={q.type === "audio"}
                 onText={(text) => patch(slotKey(q.id, null), { text })}
                 onFile={(file) => patch(slotKey(q.id, null), { file })}
                 onClearAudio={() =>
@@ -311,6 +322,7 @@ function AnswerField({
   onText,
   onFile,
   onClearAudio,
+  audioOnly = false,
 }: {
   label: string;
   editable: boolean;
@@ -318,6 +330,7 @@ function AnswerField({
   onText: (text: string) => void;
   onFile: (file: File) => void;
   onClearAudio: () => void;
+  audioOnly?: boolean;
 }) {
   const previewUrl = React.useMemo(
     () => (state.file ? URL.createObjectURL(state.file) : state.existing?.url ?? null),
@@ -353,12 +366,14 @@ function AnswerField({
   return (
     <div className="flex flex-col gap-2">
       <div className="text-xs font-medium text-ink">{label}</div>
-      <Textarea
-        value={state.text}
-        onChange={(e) => onText(e.target.value)}
-        rows={3}
-        placeholder="Type your answer…"
-      />
+      {!audioOnly ? (
+        <Textarea
+          value={state.text}
+          onChange={(e) => onText(e.target.value)}
+          rows={3}
+          placeholder="Type your answer…"
+        />
+      ) : null}
       {hasAudio && previewUrl ? (
         <div className="flex items-center gap-2">
           <audio controls src={previewUrl} className="h-9 min-w-0 flex-1" />

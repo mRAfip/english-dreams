@@ -75,6 +75,23 @@ export function getDownloadUrl(
   });
 }
 
+/**
+ * A browser-viewable URL for a document. Browsers do not render Microsoft
+ * Office files themselves, so an inline response still triggers a download.
+ * Send those files through Office's web viewer; PDFs and other browser-native
+ * formats can use the R2 inline URL directly.
+ */
+export function getDocumentViewUrl(key: string, fileName?: string | null): string {
+  const inlineUrl = getDownloadUrl(key, "inline");
+  const extension = (fileName ?? basename(key)).split(".").pop()?.toLowerCase();
+
+  if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension ?? "")) {
+    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(inlineUrl)}`;
+  }
+
+  return inlineUrl;
+}
+
 /** Delete an object from R2. Treats 404 as success (already gone). */
 export async function deleteObject(key: string): Promise<void> {
   const res = await fetch(sign("DELETE", key, 60), { method: "DELETE" });

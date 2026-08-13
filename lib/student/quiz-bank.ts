@@ -167,14 +167,10 @@ export function markPaper(
 /** The pass mark every weekend paper is graded against. */
 export const PASS_MARK = 60;
 
-/** Seconds a student gets per question. Both weekend papers are graded alike. */
-const SECONDS_PER_QUESTION = { practice: 45, assessment: 45 } as const;
-
 /**
- * How long the paper is open once started, in seconds. Derived from the
- * question count so a longer paper gets proportionally more time; the runner
- * counts down from this and auto-submits at zero.
+ * How long the paper is open once started, in seconds. The admin allocates the
+ * limit independently for each of the week's two assessments.
  */
 export function quizDurationSec(quiz: StudentQuiz): number {
-  return quiz.questionCount * SECONDS_PER_QUESTION[quiz.kind];
+  return quiz.durationMinutes * 60;
 }

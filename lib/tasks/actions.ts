@@ -113,6 +113,25 @@ export async function deleteQuestion(input: {
     .delete()
     .eq("id", input.id);
   if (error) throw new Error(error.message);
+
+  // Removing the final question removes the task's publishable content too.
+  const dayId = await resolveDayId(
+    supabase,
+    await adminCourseId(input.courseSlug),
+    input.dayNumber,
+  );
+  if (dayId) {
+    const { count } = await supabase
+      .from("task_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("day_id", dayId);
+    if ((count ?? 0) === 0) {
+      await supabase
+        .from("content_days")
+        .update({ task_status: "empty" })
+        .eq("id", dayId);
+    }
+  }
   revalidateDay(input.courseSlug, input.dayNumber);
 }
 
@@ -240,6 +259,27 @@ export async function submitTask(
   if (!courseId) return { ok: false, error: "No course assigned yet." };
   const dayId = await resolveDayId(supabase, courseId, dayNumber);
   if (!dayId) return { ok: false, error: "Day not found." };
+
+  // Audio-answer questions require an R2 audio key; do not trust the client to
+  // enforce this because Server Actions can be called with crafted input.
+  const { data: authoredQuestions, error: questionsError } = await supabase
+    .from("task_questions")
+    .select("id, type")
+    .eq("day_id", dayId);
+  if (questionsError) return { ok: false, error: questionsError.message };
+  const audioQuestionIds = new Set(
+    ((authoredQuestions ?? []) as { id: string; type: string }[])
+      .filter((question) => question.type === "audio")
+      .map((question) => question.id),
+  );
+  for (const questionId of audioQuestionIds) {
+    const answer = answers.find(
+      (item) => item.questionId === questionId && item.followupId === null,
+    );
+    if (!answer?.audio) {
+      return { ok: false, error: "Record or attach audio for every audio question." };
+    }
+  }
 
   const { data: sub, error: subError } = await supabase
     .from("task_submissions")

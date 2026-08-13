@@ -4,12 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  BadgeCheck,
   ChevronLeft,
   ClipboardList,
   Eye,
   FileText,
   Globe,
+  EyeOff,
   ListChecks,
   Loader2,
   MoreHorizontal,
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -229,8 +230,15 @@ export function ContentManager({
   /** Publish / unpublish a whole day (saved content only). */
   function togglePublish(dayNumber: number, publish: boolean) {
     startTransition(async () => {
-      await setDayPublished({ courseSlug: course.slug, dayNumber, publish });
-      router.refresh();
+      try {
+        await setDayPublished({ courseSlug: course.slug, dayNumber, publish });
+        toast.success(publish ? `Day ${dayNumber} published` : `Day ${dayNumber} unpublished`);
+        router.refresh();
+      } catch (error) {
+        toast.error(`Couldn't ${publish ? "publish" : "unpublish"} day`, {
+          description: error instanceof Error ? error.message : "Something went wrong",
+        });
+      }
     });
   }
 
@@ -388,9 +396,9 @@ export function ContentManager({
         {/* Weekend */}
         <div className="mt-8">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-ink">Weekend</h3>
+            <h3 className="text-sm font-semibold text-ink">Weekly Assessments</h3>
             <span className="text-xs text-mute">
-              Days {TEACHING_DAYS_PER_WEEK + 1}–{TEACHING_DAYS_PER_WEEK + 2} ·
+              Assessments 1 & 2 ·
               not counted toward the {teachingDayCount(weeks)}-day path
             </span>
           </div>
@@ -583,7 +591,7 @@ function WeekFormDialog({
           <DialogDescription>
             {week
               ? `Rename week ${week.weekNumber} or reword what it covers. Changes are saved with the Save bar.`
-              : `A new week is appended with ${TEACHING_DAYS_PER_WEEK} empty days and ${QUIZZES_PER_WEEK} weekend quizzes.`}
+              : `A new week is appended with ${TEACHING_DAYS_PER_WEEK} empty days and ${QUIZZES_PER_WEEK} assessments.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -700,16 +708,18 @@ function DayCard({
           <Button
             variant={published ? "secondary" : "ghost"}
             size="sm"
-            disabled={pending || !hasContent}
+            disabled={pending || !hasContent || Boolean(stagedNotesName)}
             title={
-              hasContent
-                ? undefined
-                : "Add a video, notes, or task before publishing"
+              stagedNotesName
+                ? "Save the pending notes file before publishing"
+                : hasContent
+                  ? undefined
+                  : "Add a video, notes, or task before publishing"
             }
             onClick={() => onTogglePublish(!published)}
           >
-            {published ? <BadgeCheck /> : <Globe />}
-            {published ? "Published" : "Publish"}
+            {published ? <EyeOff /> : <Globe />}
+            {published ? "Unpublish" : "Publish"}
           </Button>
           <Button variant="ghost" size="sm" asChild>
             <Link
@@ -738,7 +748,9 @@ function DayCard({
             {STATUS_LABEL[day.video.status]}
           </Badge>
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/content-management/${courseSlug}/${day.dayNumber}`}>
+            <Link
+              href={`/admin/content-management/${courseSlug}/${day.dayNumber}?tab=videos`}
+            >
               <Upload />
               Manage
             </Link>
@@ -747,7 +759,10 @@ function DayCard({
 
         <div className="flex items-center gap-3 px-4 py-3">
           <FileText className="size-4 shrink-0 text-mute" />
-          <div className="min-w-0 flex-1">
+          <Link
+            href={`/admin/content-management/${courseSlug}/${day.dayNumber}?tab=notes`}
+            className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="flex items-center gap-2 text-sm font-medium text-ink">
               Notes
               {stagedNotesName ? (
@@ -763,7 +778,7 @@ function DayCard({
                   ? (day.notes.fileName ?? "File attached")
                   : "No file"}
             </div>
-          </div>
+          </Link>
           <Badge variant={STATUS_VARIANT[day.notes.status]}>
             {STATUS_LABEL[day.notes.status]}
           </Badge>
@@ -788,7 +803,9 @@ function DayCard({
             {STATUS_LABEL[day.task.status]}
           </Badge>
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/admin/content-management/${courseSlug}/${day.dayNumber}`}>
+            <Link
+              href={`/admin/content-management/${courseSlug}/${day.dayNumber}?tab=task`}
+            >
               <Pencil />
               Manage
             </Link>
@@ -819,7 +836,7 @@ function QuizCard({
           <div>
             <div className="text-sm font-semibold text-ink">{quiz.title}</div>
             <div className="text-xs capitalize text-mute">
-              {quiz.day} · {quiz.kind}
+              {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"} · {quiz.kind}
             </div>
           </div>
         </div>

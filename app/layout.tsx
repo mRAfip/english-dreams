@@ -20,6 +20,11 @@ export const metadata: Metadata = {
   title: "English Dreams — Speak English in 60 days",
   description:
     "A 60-day English coaching program with personal trainers, daily tasks, and quizzes.",
+  icons: {
+    icon: "/icon-logo.png",
+    shortcut: "/icon-logo.png",
+    apple: "/icon-logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -78,9 +78,57 @@ export async function saveQuiz(input: {
   weekNumber: number;
   day: QuizDay;
   title: string;
+  durationMinutes: number;
   questions: QuizQuestion[];
 }): Promise<void> {
   await assertAdmin();
+
+  if (
+    !Number.isInteger(input.durationMinutes) ||
+    input.durationMinutes < 1 ||
+    input.durationMinutes > 300
+  ) {
+    throw new Error("Time limit must be a whole number from 1 to 300 minutes.");
+  }
+
+  for (const [index, question] of input.questions.entries()) {
+    const label = `Question ${index + 1}`;
+    const options = question.options.map((option) => option.trim());
+    const uniqueCorrect = new Set(question.correctIndices);
+    if (!question.prompt.trim()) throw new Error(`${label} needs a prompt.`);
+    if (options.length < 2 || options.length > 5 || options.some((option) => !option)) {
+      throw new Error(`${label} must have 2–5 non-empty options.`);
+    }
+    if (uniqueCorrect.size !== question.correctIndices.length) {
+      throw new Error(`${label} has duplicate correct answers.`);
+    }
+    if (
+      question.answerMode !== "single" &&
+      question.answerMode !== "multiple" &&
+      question.answerMode !== "true_false"
+    ) {
+      throw new Error(`${label} has an invalid answer type.`);
+    }
+    if (question.correctIndices.some((answer) => !Number.isInteger(answer) || answer < 0 || answer >= options.length)) {
+      throw new Error(`${label} has an invalid correct answer.`);
+    }
+    if (question.answerMode === "single" && question.correctIndices.length !== 1) {
+      throw new Error(`${label} must have exactly one correct answer.`);
+    }
+    if (
+      question.answerMode === "true_false" &&
+      (question.correctIndices.length !== 1 ||
+        options.length !== 2 ||
+        options[0] !== "True" ||
+        options[1] !== "False")
+    ) {
+      throw new Error(`${label} must choose either True or False.`);
+    }
+    if (question.answerMode === "multiple" && question.correctIndices.length < 2) {
+      throw new Error(`${label} needs at least two correct answers.`);
+    }
+  }
+
   const supabase = await createClient();
   const weekId = await weekIdFor(supabase, input.courseSlug, input.weekNumber);
   const kind = KIND_FOR[input.day];
@@ -108,6 +156,7 @@ export async function saveQuiz(input: {
         day: input.day,
         kind,
         title: input.title.trim(),
+        duration_minutes: input.durationMinutes,
         status,
       },
       { onConflict: "week_id,day" },
@@ -129,7 +178,9 @@ export async function saveQuiz(input: {
       position: i,
       prompt: q.prompt.trim(),
       options: q.options.map((o) => o.trim()).filter((o) => o.length > 0),
-      correct_index: q.correctIndex,
+      answer_mode: q.answerMode,
+      correct_index: q.correctIndices[0] ?? 0,
+      correct_indices: q.correctIndices,
       explanation: q.explanation.trim(),
     }));
     const { error: insError } = await supabase
@@ -177,7 +228,9 @@ type QuestionRow = {
   position: number;
   prompt: string;
   options: string[];
+  answer_mode: "single" | "multiple" | "true_false";
   correct_index: number;
+  correct_indices: number[];
   explanation: string;
 };
 
@@ -190,28 +243,29 @@ export async function startQuiz(
 
   const { data, error } = await supabase
     .from("content_quiz_questions")
-    .select("id, position, prompt, options")
+    .select("id, position, prompt, options, answer_mode")
     .eq("quiz_id", quizId)
     .order("position", { ascending: true });
   if (error) throw new Error(`Failed to load quiz: ${error.message}`);
 
-  return ((data ?? []) as Omit<QuestionRow, "correct_index" | "explanation">[]).map(
+  return ((data ?? []) as Omit<QuestionRow, "correct_index" | "correct_indices" | "explanation">[]).map(
     (q) => ({
       id: q.id,
       prompt: q.prompt,
       options: Array.isArray(q.options) ? q.options : [],
+      answerMode: q.answer_mode ?? "single",
     }),
   );
 }
 
 /**
  * Mark a submitted paper server-side and store the attempt. `answers` is the
- * chosen option index per question, in the same order startQuiz returned them.
+ * chosen option indices per question, in the same order startQuiz returned them.
  * Returns the score plus a per-question review (the answer key, revealed now).
  */
 export async function submitQuizAttempt(
   quizId: string,
-  answers: (number | null)[],
+  answers: number[][],
 ): Promise<QuizAttemptResult> {
   const userId = await currentUserId();
   const supabase = await createClient();
@@ -230,7 +284,7 @@ export async function submitQuizAttempt(
 
   const { data, error } = await supabase
     .from("content_quiz_questions")
-    .select("id, position, prompt, options, correct_index, explanation")
+    .select("id, position, prompt, options, answer_mode, correct_index, correct_indices, explanation")
     .eq("quiz_id", quizId)
     .order("position", { ascending: true });
   if (error) throw new Error(`Failed to mark quiz: ${error.message}`);
@@ -238,17 +292,26 @@ export async function submitQuizAttempt(
   const questions = (data ?? []) as QuestionRow[];
   const total = questions.length;
 
-  const review: QuizReviewItem[] = questions.map((q, i) => ({
-    questionId: q.id,
-    prompt: q.prompt,
-    options: Array.isArray(q.options) ? q.options : [],
-    chosenIndex: answers[i] ?? null,
-    correctIndex: q.correct_index,
-    explanation: q.explanation,
-  }));
+  const review: QuizReviewItem[] = questions.map((q, i) => {
+    const correctIndices =
+      Array.isArray(q.correct_indices) && q.correct_indices.length
+        ? q.correct_indices
+        : [q.correct_index];
+    return {
+      questionId: q.id,
+      prompt: q.prompt,
+      options: Array.isArray(q.options) ? q.options : [],
+      answerMode: q.answer_mode ?? "single",
+      chosenIndices: answers[i] ?? [],
+      correctIndices,
+      explanation: q.explanation,
+    };
+  });
 
   const correctCount = review.filter(
-    (r) => r.chosenIndex !== null && r.chosenIndex === r.correctIndex,
+    (r) =>
+      r.chosenIndices.length === r.correctIndices.length &&
+      r.correctIndices.every((index) => r.chosenIndices.includes(index)),
   ).length;
   const score = total === 0 ? 0 : Math.round((correctCount / total) * 100);
 
@@ -260,7 +323,7 @@ export async function submitQuizAttempt(
       score,
       correct_count: correctCount,
       total,
-      answers: answers.map((a) => (a === null ? -1 : a)),
+      answers,
     });
   if (attemptError) {
     throw new Error(`Failed to record attempt: ${attemptError.message}`);

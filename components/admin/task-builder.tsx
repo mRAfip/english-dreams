@@ -31,6 +31,8 @@ import {
   type TaskQuestion,
   type TaskQuestionType,
 } from "@/types/task";
+import type { ContentStatus } from "@/types/content";
+import { STATUS_LABEL, STATUS_VARIANT } from "@/lib/content/status";
 
 // Admin > Content > Day — authoring the day's task as typed questions. Text /
 // editing / fill-in-the-blanks take a single prompt; reading comprehension adds
@@ -38,6 +40,7 @@ import {
 
 const TYPE_HINT: Record<TaskQuestionType, string> = {
   text: "Student writes a text answer (e.g. a translation)",
+  audio: "Student records or uploads a spoken answer",
   editing: "Student fixes the mistakes in a given sentence",
   fill_blanks: "Student fills in the blanks",
   comprehension: "A passage with follow-up questions to answer",
@@ -47,10 +50,12 @@ export function TaskBuilder({
   courseSlug,
   dayNumber,
   questions,
+  status,
 }: {
   courseSlug: string;
   dayNumber: number;
   questions: TaskQuestion[];
+  status: ContentStatus;
 }) {
   const router = useRouter();
   const [adding, setAdding] = React.useState(false);
@@ -73,9 +78,12 @@ export function TaskBuilder({
   return (
     <article className="rounded-xl border border-border">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <div className="text-sm font-semibold text-ink">
-          Task · {questions.length}{" "}
-          {questions.length === 1 ? "question" : "questions"}
+        <div className="flex items-center gap-3">
+          <div className="text-sm font-semibold text-ink">
+            Task · {questions.length}{" "}
+            {questions.length === 1 ? "question" : "questions"}
+          </div>
+          <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>
         </div>
         {/* Pick the type from the menu — no hidden "last selected" state. */}
         <DropdownMenu>
@@ -399,6 +407,8 @@ function promptPlaceholder(type: TaskQuestionType): string {
   switch (type) {
     case "text":
       return "e.g. Translate to Malayalam: “Where is the nearest station?”";
+    case "audio":
+      return "e.g. Record a 30-second audio introducing yourself.";
     case "editing":
       return "e.g. Find and fix the mistakes: “She go to school every days.”";
     case "fill_blanks":

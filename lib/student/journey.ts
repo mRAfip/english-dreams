@@ -25,6 +25,7 @@ type ProgressRow = {
   notes_downloaded: boolean;
   task_completed: boolean;
   watched_video_parts: string[] | null;
+  updated_at: string;
   content_days: DayEmb | DayEmb[] | null;
 };
 
@@ -56,7 +57,7 @@ async function loadProgress(
   const { data } = await supabase
     .from("student_day_progress")
     .select(
-      "video_watched, notes_downloaded, task_completed, watched_video_parts, content_days!inner(weekday, content_weeks!inner(week_number, course_id))",
+      "video_watched, notes_downloaded, task_completed, watched_video_parts, updated_at, content_days!inner(weekday, content_weeks!inner(week_number, course_id))",
     )
     .eq("user_id", userId);
 
@@ -72,6 +73,7 @@ async function loadProgress(
       notesDownloaded: row.notes_downloaded,
       taskCompleted: row.task_completed,
       videoWatchedParts: row.watched_video_parts ?? [],
+      updatedAt: row.updated_at,
     });
   }
   return map;
