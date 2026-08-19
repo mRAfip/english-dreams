@@ -11,13 +11,14 @@ import {
   Send,
   Timer,
   X,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Meter } from "@/components/student/progress-tracker";
 import { PASS_MARK, quizDurationSec } from "@/lib/student/quiz-bank";
-import { startQuiz, submitQuizAttempt } from "@/lib/quiz/actions";
+import { getQuizReview, startQuiz, submitQuizAttempt } from "@/lib/quiz/actions";
 import type { StudentQuiz } from "@/lib/student/progress";
 import type { QuizAttemptResult, StudentQuizQuestion } from "@/types/quiz";
 
@@ -47,10 +48,35 @@ export function QuizRunner({
   const [ranOut, setRanOut] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
 
-  // Load the paper's questions once.
+  // Load the paper's questions or past attempt review once.
   React.useEffect(() => {
     let live = true;
     if (!quiz.quizId) return;
+
+    if (quiz.state === "done") {
+      getQuizReview(quiz.quizId)
+        .then((res) => {
+          if (!live) return;
+          if (res) {
+            setResult(res);
+          } else {
+            startQuiz(quiz.quizId!).then((qs) => {
+              if (!live) return;
+              setQuestions(qs);
+              setAnswers(qs.map(() => []));
+            });
+          }
+        })
+        .catch((e) =>
+          live
+            ? setLoadError(e instanceof Error ? e.message : "Failed to load review")
+            : null,
+        );
+      return () => {
+        live = false;
+      };
+    }
+
     startQuiz(quiz.quizId)
       .then((qs) => {
         if (!live) return;
@@ -65,7 +91,7 @@ export function QuizRunner({
     return () => {
       live = false;
     };
-  }, [quiz.quizId]);
+  }, [quiz.quizId, quiz.state]);
 
   const answered = answers.filter((a) => a.length > 0).length;
 
@@ -106,6 +132,17 @@ export function QuizRunner({
           Back to papers
         </Button>
       </div>
+    );
+  }
+
+  if (result) {
+    return (
+      <QuizResult
+        quiz={quiz}
+        result={result}
+        ranOut={ranOut}
+        onExit={onExit}
+      />
     );
   }
 
@@ -183,7 +220,7 @@ export function QuizRunner({
 
       {/* The question */}
       <div className="mt-6 rounded-xl border border-border bg-card p-6">
-        <h2 className="font-display text-xl font-extrabold text-ink">
+        <h2 className="whitespace-pre-wrap font-display text-xl font-extrabold text-ink leading-relaxed">
           {question.prompt}
         </h2>
         <p className="mt-2 text-xs font-medium text-mute">
@@ -226,7 +263,7 @@ export function QuizRunner({
                 >
                   {selected ? <Check className="size-3.5" /> : LETTERS[i]}
                 </span>
-                {option}
+                <span className="whitespace-pre-wrap flex-1">{option}</span>
               </button>
             );
           })}
@@ -399,48 +436,119 @@ function QuizResult({
           Your answers
         </h2>
 
-        <ol className="mt-4 flex flex-col gap-3">
-          {result.review.map((r) => {
+        <ol className="mt-4 flex flex-col gap-4">
+          {result.review.map((r, qIndex) => {
             const right =
               r.chosenIndices.length === r.correctIndices.length &&
               r.correctIndices.every((index) => r.chosenIndices.includes(index));
             return (
               <li
                 key={r.questionId}
-                className="rounded-xl border border-border bg-card p-5"
+                className="rounded-xl border border-border bg-card p-5 shadow-xs"
               >
                 <div className="flex items-start gap-3">
                   <span
                     className={cn(
-                      "flex size-7 shrink-0 items-center justify-center rounded-full",
+                      "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold mt-0.5",
                       right
-                        ? "bg-primary-pale text-positive-deep"
-                        : "bg-destructive/10 text-destructive",
+                        ? "bg-emerald-500/15 text-emerald-600"
+                        : "bg-rose-500/15 text-rose-600",
                     )}
                   >
                     {right ? (
                       <CheckCircle2 className="size-4" />
                     ) : (
-                      <X className="size-4" />
+                      <XCircle className="size-4" />
                     )}
                   </span>
 
-                  <div className="min-w-0">
-                    <div className="font-semibold text-ink">{r.prompt}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-bold text-mute uppercase tracking-wider">
+                        Question {qIndex + 1}
+                      </span>
+                      <Badge variant={right ? "positive" : "negative"}>
+                        {right ? "Correct" : "Incorrect"}
+                      </Badge>
+                    </div>
 
-                    {!right && r.chosenIndices.length > 0 && (
-                      <p className="mt-1 text-sm text-destructive">
-                        You chose: {r.chosenIndices.map((index) => r.options[index]).join(", ")}
-                      </p>
-                    )}
-                    <p className="mt-1 text-sm text-body">
-                      <span className="font-semibold text-ink">
-                        {r.correctIndices.length === 1 ? "Answer:" : "Answers:"}
-                      </span>{" "}
-                      {r.correctIndices.map((index) => r.options[index]).join(", ")}
-                    </p>
+                    <div className="whitespace-pre-wrap font-semibold text-ink text-base leading-relaxed">
+                      {r.prompt}
+                    </div>
+
+                    {/* All 4 options with color coding for correct / incorrect / selected */}
+                    <div className="mt-4 flex flex-col gap-2">
+                      {r.options.map((option, oi) => {
+                        const isChosen = r.chosenIndices.includes(oi);
+                        const isCorrect = r.correctIndices.includes(oi);
+
+                        let statusStyle = "border-border/60 bg-muted/20 text-body/80 opacity-75";
+                        let badgeText: string | null = null;
+                        let badgeColor = "";
+
+                        if (isCorrect && isChosen) {
+                          statusStyle = "border-emerald-500/60 bg-emerald-500/10 text-emerald-950 font-semibold";
+                          badgeText = "Your choice (Correct)";
+                          badgeColor = "bg-emerald-600 text-white";
+                        } else if (isCorrect) {
+                          statusStyle = "border-emerald-500/60 bg-emerald-500/10 text-emerald-950 font-semibold";
+                          badgeText = "Correct answer";
+                          badgeColor = "bg-emerald-600 text-white";
+                        } else if (isChosen) {
+                          statusStyle = "border-rose-500/60 bg-rose-500/10 text-rose-950 font-semibold";
+                          badgeText = "Your choice (Incorrect)";
+                          badgeColor = "bg-rose-500 text-white";
+                        }
+
+                        return (
+                          <div
+                            key={oi}
+                            className={cn(
+                              "flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm transition-colors",
+                              statusStyle,
+                            )}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <span
+                                className={cn(
+                                  "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold border",
+                                  isCorrect
+                                    ? "border-emerald-600 bg-emerald-600 text-white"
+                                    : isChosen
+                                      ? "border-rose-500 bg-rose-500 text-white"
+                                      : "border-border text-mute bg-background",
+                                )}
+                              >
+                                {LETTERS[oi]}
+                              </span>
+                              <span className="whitespace-pre-wrap">{option}</span>
+                            </div>
+
+                            {badgeText ? (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold shrink-0",
+                                  badgeColor,
+                                )}
+                              >
+                                {isCorrect ? (
+                                  <CheckCircle2 className="size-3" />
+                                ) : (
+                                  <XCircle className="size-3" />
+                                )}
+                                {badgeText}
+                              </span>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+
                     {r.explanation ? (
-                      <p className="mt-1 text-sm text-mute">{r.explanation}</p>
+                      <div className="mt-4 whitespace-pre-wrap rounded-lg bg-secondary/60 p-3.5 text-sm text-body border border-border/60">
+                        <span className="font-semibold text-ink block mb-1">Explanation:</span>
+                        {r.explanation}
+                      </div>
                     ) : null}
                   </div>
                 </div>

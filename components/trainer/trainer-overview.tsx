@@ -4,25 +4,22 @@ import {
   ArrowUpRight,
   ClipboardCheck,
   Clock,
-  FileText,
-  Headphones,
-  Image as ImageIcon,
+  Eye,
   MessageSquare,
   Timer,
   Users,
-  Video,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { waitingLabel } from "@/lib/tasks/review";
 import {
-  slaLevel,
-  waitingLabel,
-  type Submission,
-  type SubmissionAsset,
-} from "@/lib/tasks/review";
+  STATUS_LABEL,
+  type ReviewQueueItem,
+  type SubmissionStatus,
+} from "@/types/task";
 import {
   attentionReason,
   attentionSeverity,
@@ -32,43 +29,32 @@ import {
   type AssignedStudent,
 } from "@/lib/trainer/roster";
 
-// Trainer home — the screen a trainer opens each morning and works down.
-//
-// The whole page answers one question in order: what do I owe, and who is
-// slipping? Three bands:
-//   1. Stat row     — the four numbers that decide how the day goes.
-//   2. Review queue — the actual work, oldest first, so nothing breaches the
-//      48-hour feedback promise. Widest column because it is the job.
-//   3. Side rail    — students to chase, and how the week is tracking.
-//
-// Renders inside the (dashboard) shell, which supplies <main>, the max-width
-// and the page padding — so this is a plain block, not a page frame.
-//
-// Server component on purpose: nothing here is interactive (grading happens on
-// /trainer/review-tasks), so it ships no client JS. Both data sources are the
-// same scaffold modules the roster and review screens read, so the counts on
-// this page and the counts on those pages can never drift apart.
-
 /** How many queue rows fit before the list stops being glanceable. */
 const QUEUE_PREVIEW = 5;
 /** Students to chase, before the rail turns into a second roster page. */
 const ATTENTION_PREVIEW = 4;
 
-const ASSET_ICON: Record<SubmissionAsset["kind"], LucideIcon> = {
-  audio: Headphones,
-  video: Video,
-  document: FileText,
-  image: ImageIcon,
+const STATUS_VARIANT: Record<
+  SubmissionStatus,
+  "warning" | "positive" | "negative"
+> = {
+  submitted: "warning",
+  approved: "positive",
+  redo: "negative",
 };
 
-const SLA: Record<
-  ReturnType<typeof slaLevel>,
-  { variant: "positive" | "warning" | "negative"; label: string }
-> = {
-  fresh: { variant: "positive", label: "In time" },
-  due: { variant: "warning", label: "Due today" },
-  overdue: { variant: "negative", label: "Overdue" },
-};
+function getHoursWaiting(item: ReviewQueueItem): number {
+  if (!item.rawSubmittedAt) return 0;
+  const diffMs = Date.now() - new Date(item.rawSubmittedAt).getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+}
+
+function getSlaLevel(item: ReviewQueueItem): "fresh" | "due" | "overdue" {
+  const hours = getHoursWaiting(item);
+  if (hours >= 48) return "overdue";
+  if (hours >= 24) return "due";
+  return "fresh";
+}
 
 export function TrainerOverview({
   name,
@@ -76,18 +62,14 @@ export function TrainerOverview({
   roster,
 }: {
   name: string;
-  queue: Submission[];
+  queue: ReviewQueueItem[];
   roster: AssignedStudent[];
 }) {
-
-  const pending = queue
-    .filter((s) => s.status === "pending")
-    .sort((a, b) => b.hoursWaiting - a.hoursWaiting);
-  const overdue = pending.filter((s) => slaLevel(s) === "overdue");
-
-  // Reviewed by this trainer since the queue was last cleared — the "done"
-  // number that makes the pending number feel survivable.
-  const reviewed = queue.filter((s) => s.status !== "pending");
+  // Tasks where review is not completed ("submitted" awaiting review or "redo" requested)
+  const uncompleted = queue.filter((s) => s.status !== "approved");
+  const pending = queue.filter((s) => s.status === "submitted");
+  const overdue = pending.filter((s) => getSlaLevel(s) === "overdue");
+  const reviewed = queue.filter((s) => s.status === "approved");
 
   const flagged = roster
     .filter((s) => attentionReason(s) !== null)
@@ -106,7 +88,8 @@ export function TrainerOverview({
     0,
   );
   const closedDays = roster.reduce((sum, s) => sum + daysDoneThisWeek(s), 0);
-  const attendance = releasedDays === 0 ? 0 : Math.round((closedDays / releasedDays) * 100);
+  const attendance =
+    releasedDays === 0 ? 0 : Math.round((closedDays / releasedDays) * 100);
 
   return (
     <div className="space-y-6">
@@ -118,12 +101,16 @@ export function TrainerOverview({
             Good morning, {name}
           </h1>
           <p className="truncate text-[10px] sm:text-xs md:text-sm text-body">
-            Monday, 20 July 2026 · {pending.length} submissions
+            {uncompleted.length}{" "}
+            {uncompleted.length === 1 ? "task" : "tasks"} needing review
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button asChild className="h-8 sm:h-11 px-3 sm:px-6 text-[10px] sm:text-sm rounded-lg sm:rounded-xl">
+          <Button
+            asChild
+            className="h-8 sm:h-11 px-3 sm:px-6 text-[10px] sm:text-sm rounded-lg sm:rounded-xl"
+          >
             <Link href="/trainer/review-tasks">
               <ClipboardCheck className="mr-1 size-3.5 sm:size-4" />
               Start reviewing
@@ -150,7 +137,7 @@ export function TrainerOverview({
           hint={
             overdue.length === 0
               ? "queue is inside the SLA"
-              : `oldest ${waitingLabel(pending[0]?.hoursWaiting ?? 0)}`
+              : `oldest ${waitingLabel(getHoursWaiting(pending[0]))}`
           }
           tone={overdue.length === 0 ? "positive" : "negative"}
           icon={Timer}
@@ -166,7 +153,13 @@ export function TrainerOverview({
           label="Attendance this week"
           value={`${attendance}%`}
           hint={`${closedDays} of ${releasedDays} released days done`}
-          tone={attendance >= 80 ? "positive" : attendance >= 65 ? "warning" : "negative"}
+          tone={
+            attendance >= 80
+              ? "positive"
+              : attendance >= 65
+                ? "warning"
+                : "negative"
+          }
           icon={Clock}
         />
       </section>
@@ -181,7 +174,12 @@ export function TrainerOverview({
             >
               Review queue
             </h2>
-            <Button variant="tertiary" size="sm" asChild className="text-xs h-8 px-3">
+            <Button
+              variant="tertiary"
+              size="sm"
+              asChild
+              className="text-xs h-8 px-3"
+            >
               <Link href="/trainer/review-tasks">
                 Open queue
                 <ArrowUpRight className="ml-1 size-3.5" />
@@ -189,24 +187,24 @@ export function TrainerOverview({
             </Button>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3">
-            {pending.length === 0 ? (
+          <div className="mt-4 flex flex-col gap-2">
+            {uncompleted.length === 0 ? (
               <EmptyCard
                 icon={ClipboardCheck}
                 message="Queue is clear. Every submission has feedback."
               />
             ) : (
-              pending
+              uncompleted
                 .slice(0, QUEUE_PREVIEW)
-                .map((s) => <QueueRow key={s.id} submission={s} />)
+                .map((s) => <QueueRow key={s.submissionId} item={s} />)
             )}
 
-            {pending.length > QUEUE_PREVIEW && (
+            {uncompleted.length > QUEUE_PREVIEW && (
               <Link
                 href="/trainer/review-tasks"
                 className="rounded-xl border border-dashed border-border px-4 py-2.5 text-center text-xs sm:text-sm font-semibold text-ink hover:bg-secondary"
               >
-                {pending.length - QUEUE_PREVIEW} more waiting
+                {uncompleted.length - QUEUE_PREVIEW} more waiting
               </Link>
             )}
           </div>
@@ -222,7 +220,12 @@ export function TrainerOverview({
               >
                 Needs chasing
               </h2>
-              <Button variant="tertiary" size="sm" asChild className="text-xs h-8 px-3">
+              <Button
+                variant="tertiary"
+                size="sm"
+                asChild
+                className="text-xs h-8 px-3"
+              >
                 <Link href="/trainer/assigned-students">
                   Roster
                   <ArrowUpRight className="ml-1 size-3.5" />
@@ -262,7 +265,9 @@ export function TrainerOverview({
                 />
                 <Line
                   term="Redo requested"
-                  detail={String(queue.filter((s) => s.status === "redo").length)}
+                  detail={String(
+                    queue.filter((s) => s.status === "redo").length,
+                  )}
                 />
                 <Line
                   term="Teaching days per student"
@@ -277,44 +282,38 @@ export function TrainerOverview({
   );
 }
 
-/** One waiting submission — enough to decide whether to open it now. */
-function QueueRow({ submission }: { submission: Submission }) {
-  const sla = SLA[slaLevel(submission)];
-
+/** One waiting submission row matching /trainer/review-tasks style. */
+function QueueRow({ item }: { item: ReviewQueueItem }) {
   return (
     <Link
-      href="/trainer/review-tasks"
-      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-5 hover:border-primary transition-all sm:flex-row sm:items-center sm:justify-between"
+      href={`/trainer/review-tasks/${item.submissionId}`}
+      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-mute/40 hover:bg-muted"
     >
-      <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-        <Avatar className="size-8 sm:size-10">
-          <AvatarFallback className="text-[10px] sm:text-xs">{initials(submission.studentName)}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <div className="text-xs sm:text-sm font-semibold text-ink">{submission.studentName}</div>
-          <div className="truncate text-[10px] sm:text-xs text-body">
-            Day {submission.dayNumber} · {submission.taskTitle}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[9px] sm:text-xs text-mute">
-            <span>{submission.submittedAt}</span>
-            {submission.assets.map((asset) => {
-              const Icon = ASSET_ICON[asset.kind];
-              return (
-                <span key={asset.id} className="flex items-center gap-0.5">
-                  <Icon className="size-3 sm:size-3.5" />
-                  {asset.meta}
-                </span>
-              );
-            })}
-          </div>
+      <Avatar>
+        {item.studentAvatarUrl && (
+          <AvatarImage src={item.studentAvatarUrl} alt="" />
+        )}
+        <AvatarFallback>{initials(item.studentName)}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="font-semibold text-ink">{item.studentName}</div>
+        <div className="truncate text-xs text-mute">
+          Day {item.dayNumber} · {item.taskTitle}
+          {item.totalQuestions
+            ? ` · ${item.answeredQuestions ?? item.answerCount} of ${item.totalQuestions} answered`
+            : ` · ${item.answerCount} ${item.answerCount === 1 ? "answer" : "answers"}`}
         </div>
       </div>
-
-      <div className="flex items-center gap-2 sm:flex-col sm:items-end justify-between sm:justify-start border-t border-border/40 sm:border-t-0 pt-2 sm:pt-0 shrink-0">
-        <Badge variant={sla.variant} className="text-[9px] sm:text-xs px-1.5 py-0.5">{sla.label}</Badge>
-        <span className="text-[9px] sm:text-xs text-mute font-medium">
-          {waitingLabel(submission.hoursWaiting)}
-          {submission.late && " · late"}
+      <div className="flex shrink-0 items-center gap-3">
+        <div className="flex flex-col items-end gap-1">
+          <Badge variant={STATUS_VARIANT[item.status]}>
+            {STATUS_LABEL[item.status]}
+          </Badge>
+          <span className="text-xs text-mute">{item.submittedAt}</span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-ink">
+          <Eye className="size-4" />
+          <span className="hidden sm:inline">View</span>
         </span>
       </div>
     </Link>

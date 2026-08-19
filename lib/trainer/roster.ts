@@ -48,8 +48,11 @@ export type AssignedStudent = {
 export function attentionReason(s: AssignedStudent): string | null {
   const missed = s.weekDays.filter((d) => d === "missed").length;
   if (missed >= 2) return `Missed ${missed} days this week`;
-  if (s.quizAvg < 70) return `Quiz average ${s.quizAvg}%`;
+  if (missed === 1) return `Missed 1 day this week`;
+  if (s.quizAvg > 0 && s.quizAvg < 70) return `Quiz average ${s.quizAvg}%`;
   if (s.pendingReview >= 3) return `${s.pendingReview} tasks awaiting review`;
+  const pendingCount = s.weekDays.filter((d) => d === "pending").length;
+  if (pendingCount >= 3) return `${pendingCount} days pending`;
   return null;
 }
 
@@ -59,7 +62,8 @@ export function attentionReason(s: AssignedStudent): string | null {
  * urgent, but not the same kind of urgent.
  */
 export function attentionSeverity(s: AssignedStudent): "high" | "medium" {
-  return s.weekDays.filter((d) => d === "missed").length >= 2 ? "high" : "medium";
+  const missed = s.weekDays.filter((d) => d === "missed").length;
+  return missed >= 1 || (s.quizAvg > 0 && s.quizAvg < 60) ? "high" : "medium";
 }
 
 /** Teaching days of the current week the student has closed out. */

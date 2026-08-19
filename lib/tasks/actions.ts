@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/guards";
-import { buildSubmissionAudioKey } from "@/lib/r2/keys";
+import { buildSubmissionAudioKey, buildCommentAttachmentKey, buildQuestionImageKey } from "@/lib/r2/keys";
 import { getUploadUrl } from "@/lib/r2/presign";
 import { resolveDayId } from "@/lib/tasks/queries";
 import { courseIdForStudent } from "@/lib/student/course";
@@ -84,18 +84,43 @@ export async function addQuestion(input: {
   revalidateDay(input.courseSlug, input.dayNumber);
 }
 
+/** Presigned PUT URL for a task question's attached image. */
+export async function requestQuestionImageUploadUrl(input: {
+  courseSlug: string;
+  dayNumber: number;
+  questionId: string;
+  fileName: string;
+}): Promise<UploadTicket> {
+  await assertAdmin();
+  const key = buildQuestionImageKey(
+    input.courseSlug,
+    input.dayNumber,
+    input.questionId,
+    input.fileName,
+  );
+  return { key, uploadUrl: getUploadUrl(key) };
+}
+
 export async function updateQuestion(input: {
   courseSlug: string;
   dayNumber: number;
   id: string;
   prompt: string;
   passage: string | null;
+  imageKey?: string | null;
 }): Promise<void> {
   await assertAdmin();
   const supabase = await createClient();
+  const updatePayload: { prompt: string; passage: string | null; image_key?: string | null } = {
+    prompt: input.prompt,
+    passage: input.passage,
+  };
+  if (input.imageKey !== undefined) {
+    updatePayload.image_key = input.imageKey;
+  }
   const { error } = await supabase
     .from("task_questions")
-    .update({ prompt: input.prompt, passage: input.passage })
+    .update(updatePayload)
     .eq("id", input.id);
   if (error) throw new Error(error.message);
   revalidateDay(input.courseSlug, input.dayNumber);
@@ -260,24 +285,30 @@ export async function submitTask(
   const dayId = await resolveDayId(supabase, courseId, dayNumber);
   if (!dayId) return { ok: false, error: "Day not found." };
 
-  // Audio-answer questions require an R2 audio key; do not trust the client to
-  // enforce this because Server Actions can be called with crafted input.
+  // Validate audio for audio questions that the student has answered
   const { data: authoredQuestions, error: questionsError } = await supabase
     .from("task_questions")
     .select("id, type")
     .eq("day_id", dayId);
   if (questionsError) return { ok: false, error: questionsError.message };
+
   const audioQuestionIds = new Set(
     ((authoredQuestions ?? []) as { id: string; type: string }[])
       .filter((question) => question.type === "audio")
       .map((question) => question.id),
   );
+
+  const filledAnswers = answers.filter((a) => a.text.trim() || a.audio);
+  if (filledAnswers.length === 0) {
+    return { ok: false, error: "Answer at least one question before submitting." };
+  }
+
   for (const questionId of audioQuestionIds) {
     const answer = answers.find(
       (item) => item.questionId === questionId && item.followupId === null,
     );
-    if (!answer?.audio) {
-      return { ok: false, error: "Record or attach audio for every audio question." };
+    if (answer && answer.text.trim() && !answer.audio) {
+      return { ok: false, error: "Record or attach audio for audio questions." };
     }
   }
 
@@ -372,15 +403,35 @@ export async function setSubmissionStatus(input: {
 export type CommentResult =
   { ok: true; id: string; createdAt: string } | { ok: false; error: string };
 
+/** Presigned PUT URL for a comment attachment (voice or document). */
+export async function requestCommentAttachmentUploadUrl(input: {
+  submissionId: string;
+  fileName: string;
+}): Promise<UploadTicket> {
+  const me = await getCurrentUser();
+  if (!me) throw new Error("Not signed in.");
+  const key = buildCommentAttachmentKey(input.submissionId, input.fileName);
+  return { key, uploadUrl: getUploadUrl(key) };
+}
+
+export type CommentAttachmentInput = {
+  key: string;
+  name: string;
+  type: string | null;
+  size: number | null;
+  kind: "image" | "audio" | "file";
+};
+
 export async function postReviewComment(
   submissionId: string,
   body: string,
   questionId?: string,
+  attachment?: CommentAttachmentInput | null,
 ): Promise<CommentResult> {
   const me = await getCurrentUser();
   if (!me) return { ok: false, error: "Not signed in." };
   const trimmed = body.trim();
-  if (!trimmed) return { ok: false, error: "Comment is empty." };
+  if (!trimmed && !attachment) return { ok: false, error: "Comment is empty." };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -390,6 +441,11 @@ export async function postReviewComment(
       author_id: me.id,
       body: trimmed,
       question_id: questionId || null,
+      attachment_key: attachment?.key ?? null,
+      attachment_name: attachment?.name ?? null,
+      attachment_type: attachment?.type ?? null,
+      attachment_size: attachment?.size ?? null,
+      attachment_kind: attachment?.kind ?? null,
     })
     .select("id, created_at")
     .single();

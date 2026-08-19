@@ -195,7 +195,7 @@ export function QuizBuilder({ quiz }: { quiz: AdminQuiz }) {
   return (
     <div>
       <Link
-        href={`/admin/content-management/${quiz.courseSlug}`}
+        href={`/admin/content-management/${quiz.courseSlug}?week=${quiz.weekNumber}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-body transition-colors hover:text-ink"
       >
         <ArrowLeft className="size-4" />

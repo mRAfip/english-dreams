@@ -53,10 +53,39 @@ export async function loadAssignedStudents(
     )
     .eq("trainer_id", trainerId);
 
-  const students = (assignments ?? []) as unknown as {
+  let students = (assignments ?? []) as unknown as {
     student_id: string;
     profiles: { full_name: string | null; email: string } | null;
   }[];
+
+  // Load all students who have submissions to ensure all active students are included
+  const { data: subStudents } = await supabase
+    .from("task_submissions")
+    .select("student_id, profiles:student_id(full_name, email)");
+
+  if (subStudents && subStudents.length > 0) {
+    const uniqueMap = new Map<
+      string,
+      {
+        student_id: string;
+        profiles: { full_name: string | null; email: string } | null;
+      }
+    >();
+
+    for (const s of students) {
+      if (s.student_id) uniqueMap.set(s.student_id, s);
+    }
+
+    for (const item of subStudents as unknown as {
+      student_id: string;
+      profiles: { full_name: string | null; email: string } | null;
+    }[]) {
+      if (!uniqueMap.has(item.student_id)) {
+        uniqueMap.set(item.student_id, item);
+      }
+    }
+    students = Array.from(uniqueMap.values());
+  }
 
   if (students.length === 0) return [];
 
@@ -207,34 +236,60 @@ export async function loadReviewQueue(
     .select("student_id")
     .eq("trainer_id", trainerId);
 
-  const studentIds = (assignments ?? []).map((a) => a.student_id);
-  if (studentIds.length === 0) return [];
+  const assignedIds = (assignments ?? []).map((a) => a.student_id);
 
-  // Get submissions
-  const { data: submissions } = await supabase
+  // Load all students who have submissions to ensure unassigned active students are included
+  const { data: subStudents } = await supabase
     .from("task_submissions")
-    .select(
-      `
-      id,
-      status,
-      submitted_at,
-      student_id,
-      profiles:student_id (
-        full_name,
-        email
-      ),
-      content_days!inner (
-        weekday,
-        task_title,
-        prompt,
-        content_weeks!inner (
-          week_number
-        )
+    .select("student_id");
+
+  const studentSet = new Set(assignedIds);
+  if (subStudents) {
+    for (const s of subStudents) {
+      if (s.student_id) studentSet.add(s.student_id);
+    }
+  }
+  const allStudentIds = Array.from(studentSet);
+
+  const selectClause = `
+    id,
+    status,
+    submitted_at,
+    student_id,
+    profiles:student_id (
+      full_name,
+      email
+    ),
+    content_days (
+      weekday,
+      task_title,
+      task_prompt,
+      content_weeks (
+        week_number
       )
-    `,
     )
-    .in("student_id", studentIds)
-    .order("submitted_at", { ascending: true });
+  `;
+
+  let submissions: any[] | null = null;
+
+  if (allStudentIds.length > 0) {
+    const { data } = await supabase
+      .from("task_submissions")
+      .select(selectClause)
+      .in("student_id", allStudentIds)
+      .order("submitted_at", { ascending: true });
+    submissions = data;
+  }
+
+  // Fallback: If trainer has no assigned submissions or 0 submissions returned,
+  // load all task submissions so home screen matches /trainer/review-tasks!
+  if (!submissions || submissions.length === 0) {
+    const { data } = await supabase
+      .from("task_submissions")
+      .select(selectClause)
+      .order("submitted_at", { ascending: true });
+    submissions = data;
+  }
 
   const rows = (submissions ?? []) as unknown as {
     id: string;
@@ -245,7 +300,7 @@ export async function loadReviewQueue(
     content_days: {
       weekday: number;
       task_title: string;
-      prompt: string;
+      task_prompt: string;
       content_weeks: { week_number: number } | null;
     } | null;
   }[];
@@ -318,7 +373,7 @@ export async function loadReviewQueue(
       studentEmail: r.profiles?.email ?? "",
       dayNumber,
       taskTitle: day?.task_title || `Day ${dayNumber} task`,
-      prompt: day?.prompt || "",
+      prompt: day?.task_prompt || "",
       submittedAt: formatRelativeTime(r.submitted_at),
       hoursWaiting,
       late: false,

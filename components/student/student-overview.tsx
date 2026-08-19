@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   BookOpenCheck,
@@ -48,16 +49,15 @@ export function StudentOverview({
   name,
   journey,
   submissions = [],
+  banner = null,
 }: {
   name: string;
   journey: StudentJourney;
   submissions?: StudentSubmissionItem[];
+  banner?: { banner_key: string; banner_url: string } | null;
 }) {
   const todayDay = today(journey);
   const [activeWeekNum, setActiveWeekNum] = React.useState(journey.currentWeek);
-  const [selectedDayNumber, setSelectedDayNumber] = React.useState<number | null>(
-    todayDay ? todayDay.dayNumber : null
-  );
 
   const router = useRouter();
   const supabase = React.useMemo(() => createClient(), []);
@@ -83,6 +83,8 @@ export function StudentOverview({
   }, [supabase, router]);
 
   const activeWeek = journey.weeks[activeWeekNum - 1];
+  const sat = activeWeek?.quizzes.find((q) => q.day === "saturday");
+  const sun = activeWeek?.quizzes.find((q) => q.day === "sunday");
   const waiting = awaitingReview(journey);
   const redo = needsRedo(journey);
   const openPapers = openQuizzes(journey);
@@ -92,39 +94,25 @@ export function StudentOverview({
       : Math.round((journey.daysCompleted / journey.totalDays) * 100);
   const greeting = greetingFor(new Date().getHours());
 
-  const selectedDay = selectedDayNumber
-    ? journey.weeks.flatMap((w) => w.days).find((d) => d.dayNumber === selectedDayNumber)
-    : null;
-
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       {/* Header */}
-      <header className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-ink">
-            {greeting}, {name}
+      <header className="flex mt-6 items-center justify-between gap-3">
+        <div className="min-w-0 flex flex-col">
+          <span className="text-lg uppercase text-body/80">
+            Hi, {name}!
+          </span>
+          <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-ink mt-0.5">
+            Ready to learn
           </h1>
-          <p className="truncate text-sm text-body">
-            Week {activeWeekNum} of {journey.totalWeeks}{activeWeek ? ` · ${activeWeek.title}` : ""}
-          </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="outline"
             size="icon"
             disabled={activeWeekNum === 1}
-            onClick={() => {
-              const nextWeek = activeWeekNum - 1;
-              setActiveWeekNum(nextWeek);
-              const wk = journey.weeks[nextWeek - 1];
-              if (wk && wk.days.length > 0) {
-                const firstUnlocked = wk.days.find(d => d.state !== "locked") ?? wk.days[0];
-                setSelectedDayNumber(firstUnlocked.dayNumber);
-              } else {
-                setSelectedDayNumber(null);
-              }
-            }}
-            className="size-9 rounded-full bg-card hover:bg-muted text-ink border border-border"
+            onClick={() => setActiveWeekNum(activeWeekNum - 1)}
+            className="size-9 rounded-full bg-card hover:bg-muted text-ink border border-border nav-glass-btn"
             title="Previous week"
           >
             <ChevronLeft className="size-5" />
@@ -133,33 +121,14 @@ export function StudentOverview({
             variant="outline"
             size="icon"
             disabled={activeWeekNum === journey.totalWeeks}
-            onClick={() => {
-              const nextWeek = activeWeekNum + 1;
-              setActiveWeekNum(nextWeek);
-              const wk = journey.weeks[nextWeek - 1];
-              if (wk && wk.days.length > 0) {
-                const firstUnlocked = wk.days.find(d => d.state !== "locked") ?? wk.days[0];
-                setSelectedDayNumber(firstUnlocked.dayNumber);
-              } else {
-                setSelectedDayNumber(null);
-              }
-            }}
-            className="size-9 rounded-full bg-card hover:bg-muted text-ink border border-border"
+            onClick={() => setActiveWeekNum(activeWeekNum + 1)}
+            className="size-9 rounded-full bg-card hover:bg-muted text-ink border border-border nav-glass-btn"
             title="Next week"
           >
             <ChevronRight className="size-5" />
           </Button>
         </div>
       </header>
-
-      {/* Weekly day strip */}
-      {activeWeek ? (
-        <WeekStrip
-          week={activeWeek}
-          selectedDayNumber={selectedDayNumber}
-          onSelectDay={setSelectedDayNumber}
-        />
-      ) : null}
 
       {/* Progress + task-review hero */}
       <ProgressHero
@@ -170,52 +139,92 @@ export function StudentOverview({
         streakDays={journey.streakDays}
       />
 
-
-
-      {/* Today's day */}
-      <section aria-labelledby="today-heading" className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2
-            id="today-heading"
-            className="font-display text-lg font-extrabold text-ink"
-          >
-            {selectedDay
-              ? selectedDay.dayNumber === todayDay?.dayNumber
-                ? "Today's class"
-                : `Class for Day ${selectedDay.dayNumber}`
-              : todayDay
-                ? "Today's class"
-                : "This week"}
-          </h2>
-          <Link
-            href="/student/learning-path"
-            className="text-sm font-semibold text-blue-700 hover:underline"
-          >
-            Learning path
-          </Link>
+      {banner && (
+        <div className="relative w-full aspect-[3/1] sm:aspect-[4/1] rounded-xl overflow-hidden border border-border/50 shadow-sm bg-card transition-all hover:shadow-md">
+          <img
+            src={banner.banner_url}
+            alt="English Dreams Banner"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         </div>
+      )}
 
-        {selectedDay ? (
-          <DayModuleCard day={selectedDay} />
-        ) : todayDay ? (
-          <DayModuleCard day={todayDay} />
-        ) : openPapers.length > 0 ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
-            <p className="text-sm text-body">
-              No class today — you have an assessment waiting.
-            </p>
-            <Button asChild className="self-start">
-              <Link href="/student/quizzes">
-                <BookOpenCheck />
-                Go to assessments
-              </Link>
-            </Button>
+      {/* Today's day / Day Picker Card */}
+      <section aria-labelledby="today-heading" className="flex flex-col gap-3">
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          {/* Card Header */}
+          <div className="p-5 border-b border-border flex items-center justify-between">
+            <div>
+              <h3 id="today-heading" className="font-display text-base font-bold text-ink">
+                {journey.totalDays} Days Class
+              </h3>
+              <p className="text-xs text-mute mt-0.5">Week {activeWeekNum} of {journey.totalWeeks} · Please Select Your Day</p>
+            </div>
           </div>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center text-sm text-body">
-            No class today. Enjoy the break — your next day unlocks soon.
-          </p>
-        )}
+
+          {/* Day Selector Area */}
+          {activeWeek && (
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-1.5 w-full bg-secondary/5 p-1.5 rounded-lg border border-border/20">
+                {activeWeek.days.map((d) => (
+                  <DayPill
+                    key={d.dayNumber}
+                    day={d}
+                    onSelect={() => {
+                      if (d.state !== "locked") {
+                        router.push(`/student/learning-path/${d.dayNumber}`);
+                      }
+                    }}
+                  />
+                ))}
+                {sat && (
+                  <QuizPill
+                    quiz={sat}
+                    onSelect={() => {
+                      if (sat.state !== "locked" && sat.quizId) {
+                        router.push(`/student/quizzes?start=${sat.id}&week=${sat.weekNumber}&day=${sat.day}`);
+                      } else {
+                        router.push("/student/quizzes");
+                      }
+                    }}
+                  />
+                )}
+                {sun && (
+                  <QuizPill
+                    quiz={sun}
+                    onSelect={() => {
+                      if (sun.state !== "locked" && sun.quizId) {
+                        router.push(`/student/quizzes?start=${sun.id}&week=${sun.weekNumber}&day=${sun.day}`);
+                      } else {
+                        router.push("/student/quizzes");
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Course Status Block */}
+          <div className="px-5 pb-5">
+            <div className="bg-primary-pale border border-primary/10 rounded-xl p-4 flex items-center justify-between">
+              <div className="min-w-0">
+                <h4 className="font-semibold text-primary text-sm flex items-center gap-2">
+                  {journey.course?.title || "English Dreams Course"}
+                  <span className="bg-emerald-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Active
+                  </span>
+                </h4>
+                <p className="text-xs text-mute mt-1">
+                  Please Select Your Day
+                </p>
+              </div>
+              <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <BookOpenCheck className="size-5 text-primary" />
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Workspace: Submitted Tasks & Discussions */}
@@ -236,78 +245,81 @@ export function StudentOverview({
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="divide-y divide-border border border-border bg-card rounded-2xl overflow-hidden shadow-xs">
             {submissions.map((sub) => {
               const isRedo = sub.status === "redo";
               const isApproved = sub.status === "approved";
 
-              let badgeVariant: "neutral" | "brand" | "positive" | "negative" = "neutral";
               let badgeText = "Submitted";
+              let badgeColor = "bg-secondary/30 text-body";
               if (isRedo) {
-                badgeVariant = "negative";
                 badgeText = "Needs Redo";
+                badgeColor = "bg-destructive/10 text-destructive";
               } else if (isApproved) {
-                badgeVariant = "positive";
                 badgeText = "Approved";
+                badgeColor = "bg-emerald-500/10 text-emerald-700";
               }
 
               return (
-                <div
+                <Link
                   key={sub.submissionId}
+                  href={`/student/learning-path/${sub.dayNumber}?tab=task${sub.latestComment?.questionId ? `&q=${sub.latestComment.questionId}` : ""}#discussion`}
                   className={cn(
-                    "group flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/20 hover:shadow-xs",
-                    isRedo && "border-destructive/20 bg-destructive/[0.02]"
+                    "group flex items-start gap-4 p-4 hover:bg-muted/10 transition-colors",
+                    isRedo && "bg-destructive/[0.01]"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold text-mute uppercase tracking-wider">Day {sub.dayNumber}</span>
-                        <Badge variant={badgeVariant}>{badgeText}</Badge>
-                      </div>
-                      <h3 className="mt-1 font-display font-bold text-ink text-sm sm:text-base truncate group-hover:text-primary transition-colors">
-                        {sub.taskTitle}
-                      </h3>
-                    </div>
-                    {sub.commentCount > 0 && (
-                      <div className="flex items-center gap-1 shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs text-body font-semibold">
-                        <MessageSquare className="size-3 text-mute" />
-                        <span>{sub.commentCount}</span>
-                      </div>
-                    )}
+                  {/* Day Circle */}
+                  <div className={cn(
+                    "grid size-9 place-items-center rounded-xl font-bold text-xs shrink-0 select-none",
+                    isRedo
+                      ? "bg-destructive/10 text-destructive"
+                      : isApproved
+                        ? "bg-emerald-500/10 text-emerald-700"
+                        : "bg-secondary/20 text-body"
+                  )}>
+                    D{sub.dayNumber}
                   </div>
 
-                  {sub.latestComment ? (
-                    <div className="rounded-xl bg-secondary/35 p-3 text-xs text-body border border-border/10">
-                      <div className="flex items-center justify-between font-semibold text-ink-deep mb-1">
-                        <span>{sub.latestComment.authorName}</span>
-                        <span className="text-[10px] font-normal text-mute">{sub.latestComment.sentAt}</span>
-                      </div>
-                      <p className="line-clamp-2 italic text-body/90 leading-relaxed">
+                  {/* Info details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-ink text-sm sm:text-base group-hover:text-primary transition-colors truncate">
+                        {sub.taskTitle}
+                      </h4>
+                      <span className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider",
+                        badgeColor
+                      )}>
+                        {badgeText}
+                      </span>
+                    </div>
+
+                    {sub.latestComment ? (
+                      <p className="mt-1 text-xs text-mute truncate max-w-xl">
+                        <span className="font-medium text-ink/70">{sub.latestComment.authorName}:</span>{" "}
                         &ldquo;{sub.latestComment.body}&rdquo;
                       </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-mute italic">No messages in this discussion yet.</p>
-                  )}
+                    ) : (
+                      <p className="mt-1 text-xs text-mute/50 italic">No messages yet</p>
+                    )}
 
-                  <div className="flex items-center justify-between gap-3 border-t border-border/30 pt-3 mt-1">
-                    <span className="text-xs text-mute">
+                    <span className="inline-block mt-2 text-[10px] text-mute/50">
                       Sent {sub.submittedAt}
                     </span>
-                    <Button
-                      asChild
-                      size="sm"
-                      variant={isRedo ? "soft" : "secondary"}
-                      className="h-8 rounded-lg text-xs font-bold"
-                    >
-                      <Link href={`/student/learning-path/${sub.dayNumber}?tab=task${sub.latestComment?.questionId ? `&q=${sub.latestComment.questionId}` : ""}#discussion`}>
-                        {isRedo ? "Resubmit Task" : sub.commentCount > 0 ? "Reply to Trainer" : "Open Chat"}
-                        <ArrowRight className="size-3.5 ml-1 transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    </Button>
                   </div>
-                </div>
+
+                  {/* Comment count & Arrow */}
+                  <div className="flex items-center gap-2 shrink-0 self-center">
+                    {sub.commentCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-mute bg-secondary/15 px-2 py-0.5 rounded-full">
+                        <MessageSquare className="size-3 text-mute/60" />
+                        {sub.commentCount}
+                      </span>
+                    )}
+                    <ArrowRight className="size-4 text-mute/40 transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                </Link>
               );
             })}
           </div>
@@ -317,37 +329,7 @@ export function StudentOverview({
   );
 }
 
-/**
- * The week at a glance: five teaching days (Mon–Fri) plus the two weekend
- * assessment papers (Sat, Sun). Seven columns, always fitting the width.
- */
-function WeekStrip({
-  week,
-  selectedDayNumber,
-  onSelectDay,
-}: {
-  week: StudentWeek;
-  selectedDayNumber: number | null;
-  onSelectDay: (num: number) => void;
-}) {
-  const sat = week.quizzes.find((q) => q.day === "saturday");
-  const sun = week.quizzes.find((q) => q.day === "sunday");
 
-  return (
-    <div className="flex items-center justify-between gap-1.5 w-full bg-secondary/10 p-1.5 rounded-full border border-white/5">
-      {week.days.map((d) => (
-        <DayPill
-          key={d.dayNumber}
-          day={d}
-          selected={d.dayNumber === selectedDayNumber}
-          onSelect={() => onSelectDay(d.dayNumber)}
-        />
-      ))}
-      <QuizPill quiz={sat} />
-      <QuizPill quiz={sun} />
-    </div>
-  );
-}
 
 function PillFrame({
   href,
@@ -390,76 +372,67 @@ function PillFrame({
 
 function DayPill({
   day,
-  selected,
   onSelect,
 }: {
   day: StudentDay;
-  selected: boolean;
   onSelect: () => void;
 }) {
   const locked = day.state === "locked";
 
-  if (selected) {
-    return (
-      <PillFrame href={null} onClick={locked ? undefined : onSelect}>
-        <span className="flex items-center justify-center h-9 sm:h-10 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-extrabold whitespace-nowrap bg-[#043556] text-white shadow-[0_4px_12px_rgba(4,53,86,0.25)] border border-[#043556]/20 transition-all scale-102">
-          Day {day.dayNumber}
-        </span>
-      </PillFrame>
-    );
-  }
-
   const circle = day.state === "today"
-    ? "bg-primary-pale text-primary border border-primary/20"
+    ? "bg-[#b71a12] text-white font-extrabold border border-[#b71a12]/20 shadow-[0_2px_8px_rgba(183,26,18,0.25)]"
     : day.state === "done"
-      ? "bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-      : "bg-secondary/40 text-mute border border-border/40";
+      ? "bg-emerald-600 text-white border border-emerald-700/20"
+      : "bg-white text-ink border border-border/80";
 
   return (
     <PillFrame href={null} onClick={locked ? undefined : onSelect}>
       <span
         className={cn(
-          "grid size-9 sm:size-10 place-items-center rounded-full text-xs sm:text-sm font-bold transition-all",
+          "grid size-10 place-items-center rounded-lg text-sm font-extrabold transition-all hover:scale-105 select-none",
           circle,
+          locked && "opacity-60 bg-muted/30 text-mute border-dashed border-border"
         )}
       >
-        {locked ? <Lock className="size-3.5" /> : day.dayNumber}
+        {locked ? (
+          <Lock className="size-4 text-mute/60" />
+        ) : (
+          day.dayNumber
+        )}
       </span>
     </PillFrame>
   );
 }
 
-function QuizPill({ quiz }: { quiz: StudentQuiz | undefined }) {
-  const state = quiz?.state ?? "locked";
-  const circle = state === "done"
-    ? "bg-positive-pale text-positive-deep border border-positive/10"
-    : state === "open"
-      ? "bg-[#043556] text-white font-extrabold shadow-[0_4px_12px_rgba(4,53,86,0.3)]"
-      : state === "missed"
-        ? "bg-destructive/10 text-destructive border border-destructive/20"
-        : "bg-secondary/40 text-mute border border-border/40";
+function QuizPill({
+  quiz,
+  onSelect,
+}: {
+  quiz: StudentQuiz | undefined;
+  onSelect: () => void;
+}) {
+  if (!quiz) return null;
+  const state = quiz.state;
+  const locked = state === "locked";
+
+  const circle = state === "done" || state === "open"
+    ? "bg-[#043556] text-white font-extrabold border border-[#043556]/20 shadow-[0_2px_8px_rgba(4,53,86,0.25)]"
+    : "bg-white text-ink border border-border/80";
 
   return (
-    <PillFrame
-      href={
-        quiz && state !== "locked"
-          ? `/student/quizzes?start=${quiz.id}&week=${quiz.weekNumber}&day=${quiz.day}`
-          : quiz
-            ? "/student/quizzes"
-            : null
-      }
-      current={state === "open"}
-    >
+    <PillFrame href={null} onClick={locked ? undefined : onSelect}>
       <span
         className={cn(
-          "grid size-9 place-items-center rounded-full transition-all sm:size-10",
+          "grid size-10 place-items-center rounded-lg transition-all hover:scale-105 select-none",
           circle,
+          locked && "opacity-60 bg-muted/30 text-mute border-dashed border-border"
         )}
+        title={quiz.title}
       >
-        {state === "locked" ? (
-          <Lock className="size-4" />
+        {locked ? (
+          <Lock className="size-4 text-mute/60" />
         ) : (
-          <ListChecks className="size-4.5 text-emerald-400" />
+          <ListChecks className="size-4.5" />
         )}
       </span>
     </PillFrame>

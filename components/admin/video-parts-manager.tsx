@@ -275,6 +275,7 @@ function PartRow({
         {url ? (
           <video
             controls
+            controlsList="nodownload"
             preload="metadata"
             src={url}
             className="aspect-video w-full rounded-lg bg-black sm:w-64"

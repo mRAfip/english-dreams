@@ -2,6 +2,7 @@
 
 import { Check, CheckCheck, Download, FileText, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AudioPlayer } from "@/components/ui/audio-player";
 import type { Message, MessageAttachment } from "@/types/message";
 
 // One message. The viewer's own messages sit right on the lime brand fill; the
@@ -133,10 +134,11 @@ function AttachmentView({
 
   if (attachment.kind === "audio") {
     return (
-      <audio
-        controls
+      <AudioPlayer
         src={attachment.url}
-        className="h-10 w-56 max-w-full sm:w-64"
+        variant="bubble"
+        compact
+        className="w-56 max-w-full sm:w-64"
       />
     );
   }

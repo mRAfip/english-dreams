@@ -20,10 +20,21 @@ export const metadata: Metadata = {
   title: "English Dreams — Speak English in 60 days",
   description:
     "A 60-day English coaching program with personal trainers, daily tasks, and quizzes.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "English Dreams",
+  },
   icons: {
-    icon: "/icon-logo.png",
+    icon: [
+      { url: "/icon-logo.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-logo.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: "/icon-logo.png",
-    apple: "/icon-logo.png",
+    apple: [
+      { url: "/icon-logo.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 

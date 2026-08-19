@@ -35,6 +35,9 @@ export type TaskQuestion = {
   prompt: string;
   /** The reading passage — comprehension only. */
   passage: string | null;
+  /** Optional image attachment key & viewable URL. */
+  imageKey?: string | null;
+  imageUrl?: string | null;
   /** Comprehension follow-up questions. */
   followups: TaskFollowup[];
 };
@@ -70,6 +73,17 @@ export type TaskSubmission = {
   status: SubmissionStatus;
   submittedAt: string;
   answers: SubmissionAnswer[];
+  totalQuestions?: number;
+  answeredQuestions?: number;
+};
+
+export type CommentAttachment = {
+  url: string;
+  name: string;
+  type: string | null;
+  size: number | null;
+  kind: "image" | "audio" | "file";
+  key?: string;
 };
 
 export type ReviewComment = {
@@ -81,6 +95,7 @@ export type ReviewComment = {
   createdAt: string;
   sentAt: string;
   questionId?: string | null;
+  attachment?: CommentAttachment | null;
 };
 
 /** A row in the trainer's review queue. */
@@ -93,7 +108,10 @@ export type ReviewQueueItem = {
   taskTitle: string;
   status: SubmissionStatus;
   submittedAt: string;
+  rawSubmittedAt?: string;
   answerCount: number;
+  totalQuestions?: number;
+  answeredQuestions?: number;
 };
 
 /** One answer as the student submits it (text and/or an uploaded audio key). */

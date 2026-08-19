@@ -83,9 +83,9 @@ export async function GET(
   );
 
   // Office documents need a document renderer because browsers cannot display
-  // them natively. The presigned source URL is temporary and read-only.
+  // them natively. Use Google Docs embedded viewer for a responsive, mobile-friendly layout.
   if (!download && OFFICE_EXTENSIONS.has(ext)) {
-    const viewer = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(sourceUrl)}`;
+    const viewer = `https://docs.google.com/gview?url=${encodeURIComponent(sourceUrl)}&embedded=true`;
     return NextResponse.redirect(viewer, { status: 302 });
   }
 

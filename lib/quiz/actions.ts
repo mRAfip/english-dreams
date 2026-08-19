@@ -334,3 +334,57 @@ export async function submitQuizAttempt(
 
   return { score, correctCount, total, review };
 }
+
+/**
+ * Load a completed paper's attempt results and question explanations so the student
+ * can review their answers and mistakes anytime without retrying the paper.
+ */
+export async function getQuizReview(
+  quizId: string,
+): Promise<QuizAttemptResult | null> {
+  const userId = await currentUserId();
+  const supabase = await createClient();
+
+  const { data: attempt } = await supabase
+    .from("student_quiz_attempts")
+    .select("score, correct_count, total, answers")
+    .eq("user_id", userId)
+    .eq("quiz_id", quizId)
+    .maybeSingle();
+
+  if (!attempt) return null;
+
+  const { data: questionsData, error } = await supabase
+    .from("content_quiz_questions")
+    .select("id, position, prompt, options, answer_mode, correct_index, correct_indices, explanation")
+    .eq("quiz_id", quizId)
+    .order("position", { ascending: true });
+
+  if (error) throw new Error(`Failed to load quiz review: ${error.message}`);
+
+  const questions = (questionsData ?? []) as QuestionRow[];
+  const storedAnswers = (attempt.answers as number[][]) ?? [];
+
+  const review: QuizReviewItem[] = questions.map((q, i) => {
+    const correctIndices =
+      Array.isArray(q.correct_indices) && q.correct_indices.length
+        ? q.correct_indices
+        : [q.correct_index];
+    return {
+      questionId: q.id,
+      prompt: q.prompt,
+      options: Array.isArray(q.options) ? q.options : [],
+      answerMode: q.answer_mode ?? "single",
+      chosenIndices: storedAnswers[i] ?? [],
+      correctIndices,
+      explanation: q.explanation,
+    };
+  });
+
+  return {
+    score: attempt.score ?? 0,
+    correctCount: attempt.correct_count ?? 0,
+    total: attempt.total ?? questions.length,
+    review,
+  };
+}

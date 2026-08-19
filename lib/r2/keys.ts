@@ -118,3 +118,39 @@ export function buildMessageAttachmentKey(
 ): string {
   return `messages/${conversationId}/${randomUUID()}-${safeFileName(fileName)}`;
 }
+
+/**
+ * Build the object key for a branding banner.
+ *
+ *   branding/banners/<uuid>-<slug>.png
+ */
+export function buildBrandingBannerKey(fileName: string): string {
+  return `branding/banners/${randomUUID()}-${safeFileName(fileName)}`;
+}
+
+/**
+ * Build the object key for a task review comment attachment.
+ *
+ *   submissions/<submissionId>/comments/<uuid>-<slug>.webm
+ */
+export function buildCommentAttachmentKey(
+  submissionId: string,
+  fileName: string,
+): string {
+  return `submissions/${submissionId}/comments/${randomUUID()}-${safeFileName(fileName)}`;
+}
+
+/**
+ * Build the object key for an optional task question image attachment.
+ *
+ *   content/basic/week-03/day-12/questions/<questionId>/<uuid>-<slug>.png
+ */
+export function buildQuestionImageKey(
+  courseSlug: string,
+  dayNumber: number,
+  questionId: string,
+  fileName: string,
+): string {
+  return `${dayPrefix(courseSlug, dayNumber)}/questions/${questionId}/${randomUUID()}-${safeFileName(fileName)}`;
+}
+

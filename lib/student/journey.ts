@@ -88,12 +88,16 @@ async function loadAttempts(userId: string): Promise<Map<string, QuizAttempt>> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("student_quiz_attempts")
-    .select("quiz_id, score")
+    .select("quiz_id, score, correct_count, total")
     .eq("user_id", userId);
 
   const map = new Map<string, QuizAttempt>();
-  for (const row of (data ?? []) as { quiz_id: string; score: number }[]) {
-    map.set(row.quiz_id, { score: row.score });
+  for (const row of (data ?? []) as { quiz_id: string; score: number; correct_count: number; total: number }[]) {
+    map.set(row.quiz_id, {
+      score: row.score,
+      correctCount: row.correct_count,
+      total: row.total,
+    });
   }
   return map;
 }

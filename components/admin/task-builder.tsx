@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Image as ImageIcon, Loader2, Paperclip, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
   deleteFollowup,
   deleteQuestion,
   moveQuestion,
+  requestQuestionImageUploadUrl,
   updateFollowup,
   updateQuestion,
 } from "@/lib/tasks/actions";
@@ -154,6 +155,9 @@ function QuestionCard({
   const dirty =
     prompt !== question.prompt || passage !== (question.passage ?? "");
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+
   async function run(label: string, action: () => Promise<void>) {
     setBusy(true);
     try {
@@ -166,6 +170,66 @@ function QuestionCard({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Invalid file type", { description: "Please pick an image file." });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const ticket = await requestQuestionImageUploadUrl({
+        courseSlug,
+        dayNumber,
+        questionId: question.id,
+        fileName: file.name,
+      });
+
+      const putRes = await fetch(ticket.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: file.type ? { "Content-Type": file.type } : undefined,
+      });
+
+      if (!putRes.ok) throw new Error(`Upload failed (${putRes.status})`);
+
+      await updateQuestion({
+        courseSlug,
+        dayNumber,
+        id: question.id,
+        prompt,
+        passage: isComprehension ? passage.trim() || null : null,
+        imageKey: ticket.key,
+      });
+
+      toast.success("Question image attached!");
+      router.refresh();
+    } catch (err) {
+      toast.error("Image upload failed", {
+        description: err instanceof Error ? err.message : "Something went wrong",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function handleRemoveImage() {
+    run("Removing image", async () => {
+      await updateQuestion({
+        courseSlug,
+        dayNumber,
+        id: question.id,
+        prompt,
+        passage: isComprehension ? passage.trim() || null : null,
+        imageKey: null,
+      });
+      toast.success("Image removed");
+    });
   }
 
   return (
@@ -233,6 +297,60 @@ function QuestionCard({
             placeholder={promptPlaceholder(question.type)}
             disabled={busy}
           />
+        </div>
+
+        {/* Optional Question Image Attachment */}
+        <div className="grid gap-1.5 rounded-lg border border-dashed border-border p-3 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-ink flex items-center gap-1.5">
+              <ImageIcon className="size-3.5 text-primary" />
+              <span>Optional Question Image</span>
+            </Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImagePick}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={busy || uploadingImage}
+              onClick={() => fileInputRef.current?.click()}
+              className="h-7 text-xs gap-1"
+            >
+              {uploadingImage ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Paperclip className="size-3" />
+              )}
+              <span>{question.imageUrl ? "Replace image" : "Attach image"}</span>
+            </Button>
+          </div>
+
+          {question.imageUrl ? (
+            <div className="relative mt-2 inline-block max-w-xs group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.imageUrl}
+                alt="Question illustration"
+                className="max-h-48 w-auto rounded-lg border border-border object-contain bg-background"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                disabled={busy || uploadingImage}
+                onClick={handleRemoveImage}
+                title="Remove image"
+                className="absolute top-2 right-2 size-7 rounded-full shadow-md"
+              >
+                <X className="size-3.5" />
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {isComprehension ? (

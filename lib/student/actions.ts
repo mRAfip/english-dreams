@@ -134,7 +134,6 @@ export async function markVideoPartWatched(
 
   revalidatePath("/student");
   revalidatePath("/student/learning-path");
-  revalidatePath(`/student/learning-path/${dayNumber}`);
 }
 
 export async function setTaskCompleted(

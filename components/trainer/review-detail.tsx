@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { ReviewThread } from "@/components/tasks/review-thread";
+import { AudioPlayer } from "@/components/ui/audio-player";
 import { setSubmissionStatus } from "@/lib/tasks/actions";
 import {
   QUESTION_TYPE_LABEL,
@@ -94,9 +95,18 @@ export function ReviewDetail({
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
             {detail.studentName}
           </h1>
-          <p className="mt-1 text-sm text-body">
-            Day {detail.dayNumber} · {detail.taskTitle}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-body">
+            <span>Day {detail.dayNumber} · {detail.taskTitle}</span>
+            <span>·</span>
+            <Badge variant="outline" className="text-xs font-semibold">
+              {detail.answers.filter((a) => a.text || a.audio).length} of{" "}
+              {detail.questions.reduce(
+                (sum, q) => sum + (q.type === "comprehension" ? q.followups.length : 1),
+                0,
+              )}{" "}
+              questions answered
+            </Badge>
+          </div>
         </div>
         <Badge variant={STATUS_VARIANT[detail.status]} className="self-start">
           {STATUS_LABEL[detail.status]}
@@ -116,6 +126,16 @@ export function ReviewDetail({
               </div>
               {q.prompt ? (
                 <p className="whitespace-pre-wrap text-sm text-body">{q.prompt}</p>
+              ) : null}
+              {q.imageUrl ? (
+                <div className="mt-2 overflow-hidden rounded-xl border border-border bg-muted/30 p-1 inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={q.imageUrl}
+                    alt="Question illustration"
+                    className="max-h-80 w-auto rounded-lg object-contain"
+                  />
+                </div>
               ) : null}
               {q.passage ? (
                 <div className="mt-2 whitespace-pre-wrap rounded-lg bg-muted px-4 py-3 text-sm text-body">
@@ -221,17 +241,26 @@ function AnswerBlock({
   label: string;
   answer: SubmissionAnswer | null;
 }) {
+  const hasContent = Boolean(answer?.text || answer?.audio);
+
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
-      <div className="text-xs font-medium text-ink">{label}</div>
+      <div className="flex items-center justify-between gap-2 text-xs font-medium text-ink">
+        <span>{label}</span>
+        {!hasContent && (
+          <Badge variant="neutral" className="text-[10px] text-mute font-normal">
+            Not answered yet
+          </Badge>
+        )}
+      </div>
       {answer?.text ? (
         <p className="whitespace-pre-wrap text-sm text-body">{answer.text}</p>
       ) : null}
       {answer?.audio ? (
-        <audio controls src={answer.audio.url} className="h-9 w-full max-w-sm" />
+        <AudioPlayer src={answer.audio.url} className="w-full max-w-sm" />
       ) : null}
-      {!answer?.text && !answer?.audio ? (
-        <p className="text-sm text-mute">No answer.</p>
+      {!hasContent ? (
+        <p className="text-xs text-mute italic">Student hasn't answered this question yet.</p>
       ) : null}
     </div>
   );

@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AudioPlayer } from "@/components/ui/audio-player";
 
 // The reply box. Enter sends, Shift+Enter breaks the line. A message can carry
 // one attachment — a file/image picked with the paperclip, or a voice clip
@@ -169,7 +170,7 @@ export function MessageComposer({
           ) : kindOf(file) === "audio" && previewUrl ? (
             // Voice clip — just the player (no name/size).
             <div className="flex items-center gap-2">
-              <audio controls src={previewUrl} className="h-9 min-w-0 flex-1" />
+              <AudioPlayer src={previewUrl} compact className="min-w-0 flex-1" />
               <RemoveButton onClick={() => setFile(null)} />
             </div>
           ) : (

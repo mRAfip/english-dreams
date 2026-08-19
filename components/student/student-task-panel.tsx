@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { ReviewThread } from "@/components/tasks/review-thread";
+import { AudioPlayer } from "@/components/ui/audio-player";
 import {
   requestSubmissionAudioUploadUrl,
   submitTask,
@@ -57,7 +58,7 @@ export function StudentTaskPanel({
   threadAuthors: Record<string, { name: string; role: Role | null }>;
 }) {
   const router = useRouter();
-  const editable = !submission || submission.status === "redo";
+  const editable = submission?.status !== "approved";
   const [submitting, setSubmitting] = React.useState(false);
   const [openComments, setOpenComments] = React.useState<Record<string, boolean>>(() => {
     if (typeof window !== "undefined") {
@@ -100,18 +101,66 @@ export function StudentTaskPanel({
     return map;
   });
 
+  const totalSlots = React.useMemo(() => {
+    let count = 0;
+    for (const q of questions) {
+      count += q.type === "comprehension" ? q.followups.length : 1;
+    }
+    return count;
+  }, [questions]);
+
+  const answeredSlots = React.useMemo(() => {
+    let count = 0;
+    for (const state of Object.values(answers)) {
+      if (state.text.trim() || state.file || state.existing) {
+        count++;
+      }
+    }
+    return count;
+  }, [answers]);
+
+  React.useEffect(() => {
+    if (!editable) return;
+    const saved = localStorage.getItem(`task-draft::${meId}::${dayNumber}`);
+    if (saved) {
+      try {
+        const draftData = JSON.parse(saved);
+        setAnswers((prev) => {
+          const next = { ...prev };
+          for (const [key, text] of Object.entries(draftData)) {
+            if (next[key]) {
+              next[key] = { ...next[key], text: text as string };
+            }
+          }
+          return next;
+        });
+      } catch (e) {
+        console.error("Failed to load draft", e);
+      }
+    }
+  }, [meId, dayNumber, editable]);
+
   function patch(k: string, next: Partial<AnswerState>) {
     setAnswers((prev) => ({ ...prev, [k]: { ...prev[k], ...next } }));
+  }
+
+  function handleSaveDraft() {
+    const draftData: Record<string, string> = {};
+    for (const [key, state] of Object.entries(answers)) {
+      draftData[key] = state.text;
+    }
+    localStorage.setItem(`task-draft::${meId}::${dayNumber}`, JSON.stringify(draftData));
+    toast.success("Draft saved successfully!");
   }
 
   async function handleSubmit() {
     const missingAudio = questions.some((question) => {
       if (question.type !== "audio") return false;
       const answer = answers[slotKey(question.id, null)];
-      return !answer?.file && !answer?.existing;
+      return answer && answer.text.trim() !== "" && !answer.file && !answer.existing;
     });
     if (missingAudio) {
-      toast.error("Record or attach audio for every audio question");
+      toast.error("Record or attach audio for audio questions");
       return;
     }
 
@@ -162,7 +211,8 @@ export function StudentTaskPanel({
 
       const result = await submitTask(dayNumber, inputs);
       if (result.ok) {
-        toast.success(submission ? "Resubmitted" : "Submitted to your trainer");
+        localStorage.removeItem(`task-draft::${meId}::${dayNumber}`);
+        toast.success(submission ? "Submission updated" : "Submitted to your trainer");
         router.refresh();
       } else {
         toast.error("Couldn't submit", { description: result.error });
@@ -186,16 +236,19 @@ export function StudentTaskPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      {submission ? (
-        <div className="flex items-center gap-2">
-          <Badge variant={STATUS_VARIANT[submission.status]}>
-            {STATUS_LABEL[submission.status]}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-3.5 sm:p-4">
+        <div className="flex items-center gap-2.5">
+          <Badge variant={submission ? STATUS_VARIANT[submission.status] : "neutral"}>
+            {submission ? STATUS_LABEL[submission.status] : "Not submitted yet"}
           </Badge>
-          <span className="text-xs text-mute">
-            Submitted {submission.submittedAt}
+          <span className="text-xs font-semibold text-ink">
+            {answeredSlots} of {totalSlots} questions answered
           </span>
         </div>
-      ) : null}
+        {submission?.submittedAt && (
+          <span className="text-xs text-mute">Submitted {submission.submittedAt}</span>
+        )}
+      </div>
 
       {questions.map((q) => (
         <div key={q.id} className="rounded-xl border border-border p-4">
@@ -207,6 +260,17 @@ export function StudentTaskPanel({
           </div>
           {q.prompt ? (
             <p className="whitespace-pre-wrap text-sm text-body">{q.prompt}</p>
+          ) : null}
+
+          {q.imageUrl ? (
+            <div className="mt-3 overflow-hidden rounded-xl border border-border bg-muted/30 p-1 inline-block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={q.imageUrl}
+                alt="Question illustration"
+                className="max-h-80 w-auto rounded-lg object-contain"
+              />
+            </div>
           ) : null}
 
           {q.type === "comprehension" ? (
@@ -239,6 +303,7 @@ export function StudentTaskPanel({
                 editable={editable}
                 state={answers[slotKey(q.id, null)]}
                 audioOnly={q.type === "audio"}
+                allowAudio={q.type === "audio"}
                 onText={(text) => patch(slotKey(q.id, null), { text })}
                 onFile={(file) => patch(slotKey(q.id, null), { file })}
                 onClearAudio={() =>
@@ -286,16 +351,26 @@ export function StudentTaskPanel({
       ))}
 
       {editable ? (
-        <div className="flex items-center justify-end gap-3">
-          {submission?.status === "redo" ? (
-            <span className="text-xs text-body">
+        <div className="flex flex-col gap-3 border-t border-border pt-4 mt-2">
+          {submission?.status === "redo" && (
+            <span className="text-xs text-destructive font-medium">
               Your trainer asked for changes — update your answers and resubmit.
             </span>
-          ) : null}
-          <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <Loader2 className="animate-spin" /> : <Send />}
-            {submission ? "Resubmit" : "Submit"}
-          </Button>
+          )}
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              className="text-xs font-bold hover:bg-secondary/40"
+            >
+              Save Draft
+            </Button>
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? <Loader2 className="animate-spin" /> : <Send />}
+              {submission ? "Resubmit Task" : "Submit Task"}
+            </Button>
+          </div>
         </div>
       ) : null}
 
@@ -323,6 +398,7 @@ function AnswerField({
   onFile,
   onClearAudio,
   audioOnly = false,
+  allowAudio = false,
 }: {
   label: string;
   editable: boolean;
@@ -331,6 +407,7 @@ function AnswerField({
   onFile: (file: File) => void;
   onClearAudio: () => void;
   audioOnly?: boolean;
+  allowAudio?: boolean;
 }) {
   const previewUrl = React.useMemo(
     () => (state.file ? URL.createObjectURL(state.file) : state.existing?.url ?? null),
@@ -352,7 +429,7 @@ function AnswerField({
           </p>
         ) : null}
         {state.existing ? (
-          <audio controls src={state.existing.url} className="h-9 w-full max-w-sm" />
+          <AudioPlayer src={state.existing.url} className="w-full max-w-sm" />
         ) : null}
         {!state.text && !state.existing ? (
           <p className="text-sm text-mute">No answer.</p>
@@ -374,20 +451,22 @@ function AnswerField({
           placeholder="Type your answer…"
         />
       ) : null}
-      {hasAudio && previewUrl ? (
-        <div className="flex items-center gap-2">
-          <audio controls src={previewUrl} className="h-9 min-w-0 flex-1" />
-          <button
-            type="button"
-            onClick={onClearAudio}
-            aria-label="Remove audio"
-            className="shrink-0 rounded-md p-1.5 text-mute transition-colors hover:text-ink"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-      ) : (
-        <AudioControls onFile={onFile} />
+      {allowAudio && (
+        hasAudio && previewUrl ? (
+          <div className="flex items-center gap-2">
+            <AudioPlayer src={previewUrl} compact className="min-w-0 flex-1" />
+            <button
+              type="button"
+              onClick={onClearAudio}
+              aria-label="Remove audio"
+              className="shrink-0 rounded-md p-1.5 text-mute transition-colors hover:text-ink"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        ) : (
+          <AudioControls onFile={onFile} />
+        )
       )}
     </div>
   );

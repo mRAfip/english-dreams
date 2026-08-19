@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, CircleDot, ListChecks, Lock, Play } from "lucide-react";
+import { Check, CircleDot, Eye, ListChecks, Lock, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -234,15 +234,21 @@ function QuizCard({ quiz, onSit }: { quiz: StudentQuiz; onSit: () => void }) {
             )}
           </span>
           <div>
-            <div className="text-sm font-semibold text-ink">{quiz.title}</div>
-            <div className="text-xs capitalize text-mute">
-              {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"} · {quiz.kind}
+            <div className="text-sm font-semibold text-ink">
+              {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"}
+            </div>
+            <div className="text-xs text-mute mt-0.5">
+              {quiz.title} · <span className="capitalize">{quiz.kind}</span>
             </div>
           </div>
         </div>
 
         {quiz.state === "done" && quiz.score !== null ? (
-          <Badge variant={passed ? "positive" : "warning"}>{quiz.score}%</Badge>
+          <Badge variant={passed ? "positive" : "warning"}>
+            {quiz.correctCount !== null && quiz.total !== null
+              ? `${quiz.correctCount}/${quiz.total} (${quiz.score}%)`
+              : `${quiz.score}%`}
+          </Badge>
         ) : quiz.state === "missed" ? (
           <Badge variant="negative">Missed</Badge>
         ) : quiz.state === "open" ? (
@@ -262,6 +268,11 @@ function QuizCard({ quiz, onSit }: { quiz: StudentQuiz; onSit: () => void }) {
           >
             <Play />
             {quiz.state === "missed" ? "Sit late" : "Sit paper"}
+          </Button>
+        ) : quiz.state === "done" ? (
+          <Button variant="outline" size="sm" onClick={onSit}>
+            <Eye />
+            Review paper
           </Button>
         ) : null}
       </div>

@@ -6,6 +6,7 @@ import {
   Inbox,
   LibraryBig,
   ListChecks,
+  Palette,
   Route,
   Trophy,
   UserCog,
@@ -53,6 +54,7 @@ export const NAV_BY_ROLE: Record<Role, NavGroup[]> = {
           href: "/admin/content-management",
           icon: LibraryBig,
         },
+        { label: "Branding", href: "/admin/branding", icon: Palette },
       ],
     },
     {
@@ -125,20 +127,39 @@ export function flatNav(role: Role): NavItem[] {
   return NAV_BY_ROLE[role].flatMap((group) => group.items);
 }
 
-/** Hrefs that live in the shared Account group — kept out of the mobile tab bar. */
-const ACCOUNT_HREFS = new Set(ACCOUNT_GROUP.items.map((i) => i.href));
+const MOBILE_BAR_HREFS: Record<Role, string[]> = {
+  student: [
+    "/student",
+    "/student/learning-path",
+    "/student/quizzes",
+    "/inbox",
+  ],
+  trainer: [
+    "/trainer",
+    "/trainer/assigned-students",
+    "/trainer/review-tasks",
+    "/inbox",
+  ],
+  admin: [
+    "/admin",
+    "/admin/students",
+    "/admin/trainers",
+    "/inbox",
+  ],
+};
 
 /**
  * The icons-only tab bar shown at the bottom of the screen on phones. Room for
- * a handful of destinations only, so we take a role's primary work items (Home
- * plus its main group) and cap at four — the fifth slot is always "More", which
- * opens the full navigation drawer. Nothing is lost: everything the sidebar
- * shows is reachable from the drawer.
+ * a handful of destinations only, so we take a role's primary work items and
+ * cap at four — the fifth slot is always "More", which opens the full navigation
+ * drawer. Nothing is lost: everything the sidebar shows is reachable from the drawer.
  */
 export function mobileBarNav(role: Role): NavItem[] {
-  return flatNav(role)
-    .filter((item) => !ACCOUNT_HREFS.has(item.href))
-    .slice(0, 4);
+  const allowedHrefs = MOBILE_BAR_HREFS[role];
+  const items = flatNav(role);
+  return allowedHrefs
+    .map((href) => items.find((item) => item.href === href))
+    .filter((item): item is NavItem => !!item);
 }
 
 /**

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { participantInfo } from "@/lib/inbox/participants";
 import { formatMessageTime } from "@/lib/inbox/format";
+import { getDownloadUrl } from "@/lib/r2/presign";
 import { TEACHING_DAYS_PER_WEEK } from "@/types/content";
 import type {
   ReviewComment,
@@ -51,6 +52,7 @@ type QuestionRow = {
   type: TaskQuestionType;
   prompt: string;
   passage: string | null;
+  image_key: string | null;
   task_question_followups: { id: string; position: number; prompt: string }[] | null;
 };
 
@@ -61,6 +63,8 @@ function mapQuestion(q: QuestionRow): TaskQuestion {
     type: q.type,
     prompt: q.prompt,
     passage: q.passage,
+    imageKey: q.image_key,
+    imageUrl: q.image_key ? getDownloadUrl(q.image_key) : null,
     followups: (q.task_question_followups ?? [])
       .slice()
       .sort((a, b) => a.position - b.position)
@@ -80,7 +84,7 @@ export async function getTaskQuestions(
   const { data } = await supabase
     .from("task_questions")
     .select(
-      "id, position, type, prompt, passage, task_question_followups(id, position, prompt)",
+      "id, position, type, prompt, passage, image_key, task_question_followups(id, position, prompt)",
     )
     .eq("day_id", dayId)
     .order("position", { ascending: true });
@@ -134,23 +138,37 @@ export async function getSubmission(
   if (!sub) return null;
 
   const s = sub as { id: string; status: SubmissionStatus; submitted_at: string };
-  const { data: answers } = await supabase
-    .from("submission_answers")
-    .select(
-      "id, question_id, followup_id, answer_text, audio_key, audio_name, audio_duration_min",
-    )
-    .eq("submission_id", s.id);
+  const [{ data: answers }, { data: questions }] = await Promise.all([
+    supabase
+      .from("submission_answers")
+      .select(
+        "id, question_id, followup_id, answer_text, audio_key, audio_name, audio_duration_min",
+      )
+      .eq("submission_id", s.id),
+    supabase
+      .from("task_questions")
+      .select("id")
+      .eq("day_id", dayId),
+  ]);
+
+  const mappedAnswers = ((answers ?? []) as AnswerRow[]).map(mapAnswer);
+  const answeredQuestionIds = new Set(
+    mappedAnswers.filter((a) => a.text || a.audio).map((a) => a.questionId),
+  );
 
   return {
     id: s.id,
     status: s.status,
     submittedAt: formatMessageTime(s.submitted_at),
-    answers: ((answers ?? []) as AnswerRow[]).map(mapAnswer),
+    answers: mappedAnswers,
+    totalQuestions: questions?.length ?? 0,
+    answeredQuestions: answeredQuestionIds.size,
   };
 }
 
 type QueueRow = {
   id: string;
+  day_id: string;
   student_id: string;
   status: SubmissionStatus;
   submitted_at: string;
@@ -169,7 +187,7 @@ export async function getReviewQueue(): Promise<ReviewQueueItem[]> {
   const { data } = await supabase
     .from("task_submissions")
     .select(
-      "id, student_id, status, submitted_at, content_days!inner(weekday, task_title, content_weeks!inner(week_number))",
+      "id, day_id, student_id, status, submitted_at, content_days(weekday, task_title, content_weeks(week_number))",
     )
     .order("submitted_at", { ascending: true });
   const rows = (data ?? []) as unknown as QueueRow[];
@@ -177,15 +195,40 @@ export async function getReviewQueue(): Promise<ReviewQueueItem[]> {
 
   const info = await participantInfo([...new Set(rows.map((r) => r.student_id))]);
 
-  // Answer counts per submission.
+  // Answer counts & total questions per submission.
   const ids = rows.map((r) => r.id);
-  const { data: answerRows } = await supabase
-    .from("submission_answers")
-    .select("submission_id")
-    .in("submission_id", ids);
+  const dayIds = [...new Set(rows.map((r) => r.day_id).filter(Boolean))];
+
+  const [{ data: answerRows }, { data: questionRows }] = await Promise.all([
+    supabase
+      .from("submission_answers")
+      .select("submission_id, question_id, answer_text, audio_key")
+      .in("submission_id", ids),
+    dayIds.length > 0
+      ? supabase.from("task_questions").select("day_id").in("day_id", dayIds)
+      : { data: [] },
+  ]);
+
   const counts = new Map<string, number>();
-  for (const a of (answerRows ?? []) as { submission_id: string }[]) {
+  const answeredSet = new Map<string, Set<string>>();
+  for (const a of (answerRows ?? []) as {
+    submission_id: string;
+    question_id: string;
+    answer_text: string | null;
+    audio_key: string | null;
+  }[]) {
     counts.set(a.submission_id, (counts.get(a.submission_id) ?? 0) + 1);
+    if (a.answer_text || a.audio_key) {
+      if (!answeredSet.has(a.submission_id)) {
+        answeredSet.set(a.submission_id, new Set());
+      }
+      answeredSet.get(a.submission_id)!.add(a.question_id);
+    }
+  }
+
+  const totalByDay = new Map<string, number>();
+  for (const q of (questionRows ?? []) as { day_id: string }[]) {
+    totalByDay.set(q.day_id, (totalByDay.get(q.day_id) ?? 0) + 1);
   }
 
   return rows
@@ -197,6 +240,9 @@ export async function getReviewQueue(): Promise<ReviewQueueItem[]> {
           ? (week.week_number - 1) * TEACHING_DAYS_PER_WEEK + day.weekday
           : 0;
       const i = info.get(r.student_id);
+      const totalQ = totalByDay.get(r.day_id) ?? 0;
+      const answeredQ = answeredSet.get(r.id)?.size ?? counts.get(r.id) ?? 0;
+
       return {
         submissionId: r.id,
         dayNumber,
@@ -206,7 +252,10 @@ export async function getReviewQueue(): Promise<ReviewQueueItem[]> {
         taskTitle: day?.task_title || `Day ${dayNumber} task`,
         status: r.status,
         submittedAt: formatMessageTime(r.submitted_at),
+        rawSubmittedAt: r.submitted_at,
         answerCount: counts.get(r.id) ?? 0,
+        totalQuestions: totalQ,
+        answeredQuestions: answeredQ,
       } satisfies ReviewQueueItem;
     })
     // Pending first, then approved/redo; newest submitted last so the oldest
@@ -294,7 +343,7 @@ export async function getReviewComments(
   const supabase = await createClient();
   const { data } = await supabase
     .from("task_review_comments")
-    .select("id, author_id, body, created_at, question_id")
+    .select("id, author_id, body, created_at, question_id, attachment_key, attachment_name, attachment_type, attachment_size, attachment_kind")
     .eq("submission_id", submissionId)
     .order("created_at", { ascending: true });
   const rows = (data ?? []) as {
@@ -303,6 +352,11 @@ export async function getReviewComments(
     body: string;
     created_at: string;
     question_id: string | null;
+    attachment_key: string | null;
+    attachment_name: string | null;
+    attachment_type: string | null;
+    attachment_size: number | null;
+    attachment_kind: "image" | "audio" | "file" | null;
   }[];
   if (rows.length === 0) return [];
 
@@ -321,6 +375,16 @@ export async function getReviewComments(
       createdAt: r.created_at,
       sentAt: formatMessageTime(r.created_at),
       questionId: r.question_id,
+      attachment: r.attachment_key
+        ? {
+            url: `/api/task-comment-attachment/${r.id}`,
+            name: r.attachment_name ?? "attachment",
+            type: r.attachment_type,
+            size: r.attachment_size,
+            kind: r.attachment_kind ?? "file",
+            key: r.attachment_key,
+          }
+        : null,
     };
   });
 }

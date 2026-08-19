@@ -2,19 +2,19 @@
 
 import * as React from "react";
 import {
-  CalendarClock,
   Check,
+  Eye,
   ListChecks,
   Lock,
   Play,
   Timer,
-  TrendingUp,
+  Trophy,
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Meter, StatTile } from "@/components/student/progress-tracker";
+import { Meter } from "@/components/student/progress-tracker";
 import { QuizRunner } from "@/components/student/quiz-runner";
 import { PASS_MARK, quizDurationSec } from "@/lib/student/quiz-bank";
 import {
@@ -81,7 +81,40 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
   const best = done.reduce((max, q) => Math.max(max, q.score ?? 0), 0);
   const passed = done.filter((q) => (q.score ?? 0) >= PASS_MARK).length;
 
+  // Calculate overall total score & points across all sat quizzes
+  let totalCorrect = 0;
+  let totalPossible = 0;
+  for (const q of done) {
+    if (q.correctCount !== null && q.total !== null) {
+      totalCorrect += q.correctCount;
+      totalPossible += q.total;
+    } else if (q.score !== null) {
+      const total = q.total ?? q.questionCount ?? 25;
+      const correct = Math.round((q.score / 100) * total);
+      totalCorrect += correct;
+      totalPossible += total;
+    }
+  }
+  const totalPercent = totalPossible > 0 ? Math.round((totalCorrect / totalPossible) * 100) : 0;
+
   const week = journey.weeks[selected - 1];
+
+  // Calculate selected week's total score
+  let weekCorrectPoints = 0;
+  let weekTotalPoints = 0;
+  const weekDoneQuizzes = week ? week.quizzes.filter((q) => q.state === "done") : [];
+  for (const q of weekDoneQuizzes) {
+    if (q.correctCount !== null && q.total !== null) {
+      weekCorrectPoints += q.correctCount;
+      weekTotalPoints += q.total;
+    } else if (q.score !== null) {
+      const total = q.total ?? q.questionCount ?? 25;
+      const correct = Math.round((q.score / 100) * total);
+      weekCorrectPoints += correct;
+      weekTotalPoints += total;
+    }
+  }
+  const weekPercent = weekTotalPoints > 0 ? Math.round((weekCorrectPoints / weekTotalPoints) * 100) : 0;
 
   // No published curriculum yet — there are no papers to sit.
   if (journey.weeks.length === 0 || !week) {
@@ -119,40 +152,7 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
         </div>
       </header>
 
-      {/* Numbers across every week */}
-      <section
-        aria-label="Your assessment record"
-        className="mt-6 hidden sm:grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <StatTile
-          label="Open now"
-          value={String(open.length)}
-          hint={open.length === 0 ? "nothing to sit today" : "waiting for you"}
-          tone={open.length > 0 ? "warning" : "neutral"}
-          icon={CalendarClock}
-        />
-        <StatTile
-          label="Average"
-          value={average === null ? "—" : `${average}%`}
-          hint={`across ${done.length} sat ${done.length === 1 ? "assessment" : "assessments"}`}
-          tone={average !== null && average >= PASS_MARK ? "positive" : "neutral"}
-          icon={TrendingUp}
-        />
-        <StatTile
-          label="Best score"
-          value={done.length === 0 ? "—" : `${best}%`}
-          hint={`${passed} of ${done.length} passed`}
-          tone={done.length > 0 ? "positive" : "neutral"}
-          icon={ListChecks}
-        />
-        <StatTile
-          label="Missed"
-          value={String(missed.length)}
-          hint={missed.length === 0 ? "you've sat every assessment" : "assessments you skipped"}
-          tone={missed.length === 0 ? "positive" : "negative"}
-          icon={XCircle}
-        />
-      </section>
+
 
       {/* Week rail — same control as the learning path. The marker shows whether
           that week's papers are behind you, open, or still locked. */}
@@ -173,15 +173,30 @@ export function QuizBoard({ journey }: { journey: StudentJourney }) {
 
       {/* The selected week's two papers */}
       <section className="mt-6" aria-label={`Week ${week.weekNumber} papers`}>
-        <div className="flex flex-col gap-1 border-b border-border pb-4">
-          <h2 className="font-display text-xl font-extrabold tracking-tight text-ink">
-            Week {week.weekNumber} · {week.title}
-          </h2>
-          <p className="text-sm text-body">
-            {week.state === "locked"
-              ? "These assessments unlock when you reach this week."
-              : "Both assessments are graded — your combined marks set your place on this week's leaderboard."}
-          </p>
+        <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1 min-w-0">
+            <h2 className="font-display text-xl font-extrabold tracking-tight text-ink">
+              Week {week.weekNumber} · {week.title}
+            </h2>
+            <p className="text-sm text-body">
+              {week.state === "locked"
+                ? "These assessments unlock when you reach this week."
+                : "Both assessments are graded — your combined marks set your place on this week's leaderboard."}
+            </p>
+          </div>
+
+          {weekDoneQuizzes.length > 0 && (
+            <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary-pale/40 px-4 py-2.5 shrink-0">
+              <Trophy className="size-5 text-primary shrink-0" />
+              <div>
+                <div className="text-xs text-mute font-medium">Week {week.weekNumber} Total Score</div>
+                <div className="font-display text-base font-extrabold text-ink">
+                  {weekCorrectPoints} / {weekTotalPoints}{" "}
+                  <span className="text-xs font-semibold text-mute">({weekPercent}%)</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -265,9 +280,11 @@ function QuizCard({
             )}
           </span>
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-ink">{quiz.title}</div>
-              <div className="text-xs capitalize text-mute">
-                {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"} · graded
+              <div className="text-sm font-semibold text-ink">
+                {quiz.day === "saturday" ? "Assessment 1" : "Assessment 2"}
+              </div>
+              <div className="text-xs text-mute mt-0.5">
+                {quiz.title} · <span className="capitalize">{quiz.kind}</span>
               </div>
             </div>
         </div>
@@ -293,11 +310,16 @@ function QuizCard({
             <span className="text-xs text-mute">Your score</span>
             <span
               className={cn(
-                "font-display text-xl font-extrabold tabular-nums",
+                "font-display text-base font-extrabold tabular-nums flex items-center gap-1.5",
                 passed ? "text-ink" : "text-warning-deep",
               )}
             >
-              {quiz.score}%
+              {quiz.correctCount !== null && quiz.total !== null ? (
+                <span className="text-xs font-semibold text-mute/80">
+                  {quiz.correctCount}/{quiz.total} correct ·
+                </span>
+              ) : null}
+              <span>{quiz.score}%</span>
             </span>
           </div>
           <Meter
@@ -334,6 +356,12 @@ function QuizCard({
           <Button size="sm" variant="secondary" onClick={() => onSit(quiz)}>
             <Play />
             Sit late
+          </Button>
+        )}
+        {quiz.state === "done" && (
+          <Button size="sm" variant="outline" onClick={() => onSit(quiz)}>
+            <Eye />
+            Review paper
           </Button>
         )}
       </div>

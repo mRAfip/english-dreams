@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/guards";
 import { TrainerOverview } from "@/components/trainer/trainer-overview";
-import { loadReviewQueue, loadAssignedStudents } from "@/lib/trainer/queries";
+import { loadAssignedStudents } from "@/lib/trainer/queries";
+import { getReviewQueue } from "@/lib/tasks/queries";
 
 // Trainer home — day-to-day operations: what is waiting to be reviewed, which
 // students are slipping, and how the week is tracking. Chrome (sidebar, topbar,
@@ -12,7 +13,7 @@ export default async function TrainerDashboard() {
   const name = (user.fullName ?? user.email).split(/[\s@]/)[0];
 
   const [queue, roster] = await Promise.all([
-    loadReviewQueue(user.id),
+    getReviewQueue(),
     loadAssignedStudents(user.id),
   ]);
 

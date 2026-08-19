@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@embedpdf/react-pdf-viewer':
+        specifier: ^2.15.0
+        version: 2.15.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
       '@radix-ui/react-avatar':
         specifier: ^1.2.2
         version: 1.2.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -53,6 +56,9 @@ importers:
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      pdfjs-dist:
+        specifier: ^6.2.108
+        version: 6.2.108
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -152,6 +158,11 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
+  '@babel/parser@7.29.8':
+    resolution: {integrity: sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
   '@babel/template@7.29.7':
     resolution: {integrity: sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg==}
     engines: {node: '>=6.9.0'}
@@ -163,6 +174,381 @@ packages:
   '@babel/types@7.29.7':
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
+
+  '@babel/types@7.29.8':
+    resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
+    engines: {node: '>=6.9.0'}
+
+  '@embedpdf/core@2.15.0':
+    resolution: {integrity: sha512-0yaPCgvbE5/cBf+5rHBUsRUm8i6hSl894xjC19HTOmb8DqrhxOxbOQSyjiTbJTQK52zZrNL79SigsPgGHPrYWA==}
+    peerDependencies:
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/engines@2.15.0':
+    resolution: {integrity: sha512-fW5UoqpDRkAWDbGMl3y6ril3l2qXzoYz+klt4O2P8gWzYzhG3fmr0L2+qzjD+BPO+QfYMNNvmBI+teT/nYjm/g==}
+    peerDependencies:
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/fonts-arabic@1.0.0':
+    resolution: {integrity: sha512-SnGvQb+LwPZQO2WjjvlmXrJZolJUfLYbLZQSaYUw1vrQyMyJKT4LewvJGG+hZ+Yz2fz7OMIQ+4Gc98mGODZtOg==}
+
+  '@embedpdf/fonts-hebrew@1.0.0':
+    resolution: {integrity: sha512-5HVAKGL7VqPeTxxADDrSqAFBxfmAXdP8fIqrPwJIKkqdK2643bOer8CqnnpO3/nPoFhkzxhttWMB9BGiqSW62w==}
+
+  '@embedpdf/fonts-jp@1.0.0':
+    resolution: {integrity: sha512-BY2tv/mcICUUKf+M/bizf3RU65PMqKClJ/e5o9mgMibxyML0OQvEDwYMRPODQkKgJKXCO3ScHmVvcmXp6kt+fA==}
+
+  '@embedpdf/fonts-kr@1.0.0':
+    resolution: {integrity: sha512-bh88HXSvOBS581kgmihWY7Ijp9hBsvlmXogFG5LSNx9UBAobRcakZiFMGieRBc06hUSkpo7WhjaFM/z/SfQ8dQ==}
+
+  '@embedpdf/fonts-latin@1.0.0':
+    resolution: {integrity: sha512-LLYysdr8O6sRNzhmW3PbF3AeA8xnqvOi4XLFfIfNlW5uEZ+qsJdcfd78Q78sFJMhlaOAYFMziMMsnOzmx463rA==}
+
+  '@embedpdf/fonts-sc@1.0.0':
+    resolution: {integrity: sha512-ETXl7XCwaQLSSvMO3EUDwMNqtL64kX2LlFxarTRi/NsIGGOIxUurGfKtrkmtnKHrWy1jAJSt6oxK2uJhvdvQIw==}
+
+  '@embedpdf/fonts-tc@1.0.0':
+    resolution: {integrity: sha512-rGZJbVD6DYS5BbXdpEMnWkpVF0Knar+bsiyb2o3+YRx7O8eyFubEBQUSUInirQk69HA6fc3GhYCg7TyC/oD76Q==}
+
+  '@embedpdf/models@2.15.0':
+    resolution: {integrity: sha512-gHr+hAN094kmzCB+6J2zaiHS8o4tKeY0IfTOxVEGwqntgKk8LCWD3s+P7dlVY3V8XUVmdyFWhFt7zwm0uw+VMg==}
+
+  '@embedpdf/pdfium@2.15.0':
+    resolution: {integrity: sha512-KgpRND2MYcdbhzb2EMb4WzWcJYrR0A6JXvhMv4WthEHKt6qmNo2v/MC68bpYvpveYT9GNnUnY/+TG5MpXY3pRw==}
+
+  '@embedpdf/plugin-annotation@2.15.0':
+    resolution: {integrity: sha512-1g7Ls9ak/TLaRY42H1GxLriH91yBxaP3ezFDbyGSfW/nV1V5tLJ8d1OZG7Dm1HbhAcnzSt7nOXOZRqFnmhpjyQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-history': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0
+      '@embedpdf/plugin-scroll': 2.15.0
+      '@embedpdf/plugin-selection': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-attachment@2.15.0':
+    resolution: {integrity: sha512-vv8uzyqNSujrXKsmIKyV9D/8UnWfyo/MLY5lSQFoFy8Egecbqlbe8LTFcyHYA3fNhvKds+JFLV1khxnnp6tBoA==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-bookmark@2.15.0':
+    resolution: {integrity: sha512-pioAUfmKWiM0uc1PkGL3um7SPpcSrtcNhzdV6sgKDtLYxNBzObaCRbsQzGr0vFRayMNkDIlsRsx2yiLK6D+JcQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-capture@2.15.0':
+    resolution: {integrity: sha512-uPmO/U1WMitYQMbXnMj+H4lla4bTj+mtxLPbu4Ck2P/f5MK4Id1LT+AGo8zvVRELYLWyWrkS/R/5FIhB+xpAIA==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-commands@2.15.0':
+    resolution: {integrity: sha512-2XgtXSRlkZRtI108xaV3p3zxBJ4uMHpwqrMXvbTRcCFMU5lXH+ntjTYy7/j6mI5ghtp03/pLeZxD5rG/CwRixg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-document-manager@2.15.0':
+    resolution: {integrity: sha512-M8EwOuonICSHfOklTMwk0XfyPhG9v9EMDRU9Pvz0zAe1DJzUPtIxUh+CgxtFSSnUeKSfxE7JpTRryrbUW0XcGg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-export@2.15.0':
+    resolution: {integrity: sha512-GFmC4nkZZnH1swivfSwLako2YV6d60QPSPUqvozQaMWDuE8rNq/ElYISVihkEAxbhI4h3q5AkhDKyCVFeJJVbg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-form@2.15.0':
+    resolution: {integrity: sha512-0kUqf/BHsNeHhUAdcSz3Dsqy5qNvDgQP6IhhMq5KLH+mtMoUuYiEyOGwHSY97V4vxAG9MF/UexT+CP4LfL3Yvg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0
+      '@embedpdf/plugin-history': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-fullscreen@2.15.0':
+    resolution: {integrity: sha512-DYyoUrWD9E6NkPCaeGZQH/qpKUgJ20rXi9tOtZIc/cRAvynfcjWNCamwWXd7cDbLwrkbo+5rJIwTponKLXh5oQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-history@2.15.0':
+    resolution: {integrity: sha512-3Dk4Atc5vdHsTjC8tJ8MOGPcUJLkCWbMzt3sTllmyNc534qTZtUvFHDeaaB65u50EJGjFRpUJ6Xcnp9A81lMdg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-i18n@2.15.0':
+    resolution: {integrity: sha512-xSbkJcj1Fc7dKyV7lhBU9d0xuH4wGKcPwRmkMxOvi3KJ/XD3zgfqdFMazDICN+rzth40gHSeRNhyCKZpXeYkuQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-interaction-manager@2.15.0':
+    resolution: {integrity: sha512-YCMvTvu4Fm1KNuEhj+CftzG+T6F1+/QhI7eaYft9Lp5xm3CYSXdR3pNfGwNFy5XkDUDwB1IscLTiU0q75viMCw==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-pan@2.15.0':
+    resolution: {integrity: sha512-bgFM7xTJRNzkFs5CH9apv5USR7Db2fdbNVbHq/U1GanEyz/71gZGoDWUN9FF/FbNvBfSfvPYZDv9DLJYLbeoBQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0
+      '@embedpdf/plugin-viewport': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-print@2.15.0':
+    resolution: {integrity: sha512-IS6Wvi7zY0iozdYmVwfZXSjKURBe4AqhuyV1QtbcUS1hZxe0ASRETGiHe9ONpuokWemZmYDHNyTrdF7+5hdLEw==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-redaction@2.15.0':
+    resolution: {integrity: sha512-H4WgRSSqBlWtP7sgDbAqWW/w6HAyjA3RS6lMuEmCMF19trDyQMdeAC8ZyQkFCYudFk9L+ydradSbNBYK18PfDw==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0
+      '@embedpdf/plugin-history': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0
+      '@embedpdf/plugin-selection': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-render@2.15.0':
+    resolution: {integrity: sha512-EVfn8XsdU10VgrSs9qKo8nqjfUyt2/NWFJtlW3nX4sZ74Pi9xSvEa7/B99/LYZZMa0ENzi+4HKAXiQ6NUXisDg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-rotate@2.15.0':
+    resolution: {integrity: sha512-mhfDC8NCQ8H6ati3O6smA6ZxZoMgPGtloEeY6gs61+zoxPKyXiuCpxZKJctRfYdrTdoRgXpFa3fKflwStMcgFg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-scroll@2.15.0':
+    resolution: {integrity: sha512-UqjLH3lafrpqN1qcxIpfd1MfWW5Fdf6/4LjneUabHt+3gxy1qd2KU9oPR5wwinsh3vmjn90qURsnqIHL5jnaOg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-viewport': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-search@2.15.0':
+    resolution: {integrity: sha512-mMzy8uo3xvDMjSc+xuBMgdI/mmmpgbZ6xKTmNxpF0d8BcaWu6Zp9a4ewamfjBwg8WF/qUW49U6HYZsiRr3NUEQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-selection@2.15.0':
+    resolution: {integrity: sha512-iEnhx0jeQrbze7WHkHhZtF21yfGBuqF2B+V2efLHT2O0a2fnof+PEVaQQRgERSfrwRvLvyEJL9ud54E41ahsRQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-signature@2.15.0':
+    resolution: {integrity: sha512-aFD6sHExivqdCK3U2Xns/nsZxS9jhMAgdJTrumc3eenCzGbXAHhX7wkzgIDfZs3AyKRepbUnz9wmM6lNG+IKoQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-spread@2.15.0':
+    resolution: {integrity: sha512-Gj1Nl9E/T92MkaBxL+BCH8WHfzvfM+Vb9vgTPi0gnV7Jr1SaWrtIQpMlYom21f4p9pT/m7KuBVz3xA+NV8r39A==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-stamp@2.15.0':
+    resolution: {integrity: sha512-QjrzwCUVYoRX/zp8FpMByGgmUxvovARmd+xSaMtH70iHAPZxpvSLJ9DpoV2sbtEiwnQYrIZJry6TzCtB2bNvXQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0
+      '@embedpdf/plugin-i18n': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-thumbnail@2.15.0':
+    resolution: {integrity: sha512-39EojqobHmvSvk2ejKeh58m43ApGS3cie/sVZP+pkXr6MRogX6+ivMa5GfoqBzh9wdZAZ3l4XTd+RQ4kFZ4aqQ==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-tiling@2.15.0':
+    resolution: {integrity: sha512-zBjKCToAkL1tYvkIjFCjsbfUzZ0QBPczL3wRy/IdNZ9CQuZrqqqp3xEFrI4Nz2o9XQd9heBlMA9Zo/yieuazqA==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0
+      '@embedpdf/plugin-scroll': 2.15.0
+      '@embedpdf/plugin-viewport': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-ui@2.15.0':
+    resolution: {integrity: sha512-6aixrGLylfOk7S+TZojxBjXlR7ToZ4OD4td1b/wfuu8Nmtv7RmNnwu2F7h6aLp54VIhjdHCIrgzWUOjWLqSAJw==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0
+      '@embedpdf/plugin-scroll': 2.15.0
+      '@embedpdf/plugin-viewport': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-viewport@2.15.0':
+    resolution: {integrity: sha512-MXNBQOitr1cAoCoBKwAR3O78eLtHBbIngOkWqgm6EpWTdoYDBVhZlvVcmwmjheZKjMJFnU3sFr98w6Qwix3Cjg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/plugin-zoom@2.15.0':
+    resolution: {integrity: sha512-d+YhwqcQNZaaHczVGe4pbaAYQXWO4MEoivcW7jOpE31VnKqEAdjCMye8F0ctcF5OjgbXeb6AKCk4L4fDdLF4mg==}
+    peerDependencies:
+      '@embedpdf/core': 2.15.0
+      '@embedpdf/plugin-scroll': 2.15.0
+      '@embedpdf/plugin-viewport': 2.15.0
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
+
+  '@embedpdf/react-pdf-viewer@2.15.0':
+    resolution: {integrity: sha512-Y8X/N9BZAnIChAUP9LkU19erRv0E56AkAmcWDC4vyjuhpLK2qIlMqqv7gApGffXxUEpQay5qMt3K6V2kjZS2/w==}
+    peerDependencies:
+      react: '>=17.0.0'
+      react-dom: '>=17.0.0'
+
+  '@embedpdf/snippet@2.15.0':
+    resolution: {integrity: sha512-oTJBxqCIqCM1SIXSYt7AmzzUO0J9yi9vFFRVzWc4BRDmX/K6Jp98EIwa7WTVQSylbhvOIGEOnOnqm9ZDx+sg0g==}
+
+  '@embedpdf/utils@2.15.0':
+    resolution: {integrity: sha512-13UEMPpu5XrxmYI/MPiLtJC3R3b1g8ii3zfhQ3g1WpECybnwTuhBgwqaOvqw3rVCKCnXEgNMs4PBCzLyFpZZTw==}
+    peerDependencies:
+      preact: ^10.26.4
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      svelte: '>=5 <6'
+      vue: '>=3.2.0'
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -401,6 +787,76 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@napi-rs/canvas-android-arm64@1.0.7':
+    resolution: {integrity: sha512-d5p4hHTykc/9PjiBXkvCH/IC5hT5jH7BjQ1u8ITq+G8x4VmvveOHdy/4BWYcC3ebWRmrG9zEc/oCTy+Yf3iZ4A==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [android]
+
+  '@napi-rs/canvas-darwin-arm64@1.0.7':
+    resolution: {integrity: sha512-jKfZl2QDqBr6/Ap/8NKkX0Po9SFfVjUPBJbQQmYGVtQQIazWWIAO60riH3Mz2sOyysa2oJO39sLEfXerypu0vg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@napi-rs/canvas-darwin-x64@1.0.7':
+    resolution: {integrity: sha512-v1asrnKBu0tD+sdSD2qVIUfhoXSrr8LFTn7z76pN+8xsiOrmFcAVty57R/5DB8ZNqNLKsUBDXFSrzf4Wt9NaSg==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@napi-rs/canvas-linux-arm-gnueabihf@1.0.7':
+    resolution: {integrity: sha512-c4Hcu4L5bXCgLY8jrZ2hy/Avl65MsbfH9DqNWrrd9InbpBZZF/rmrh7XkgmTUmOFcUrt/PaFSBinW2C0moDgcA==}
+    engines: {node: '>= 10'}
+    cpu: [arm]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-arm64-gnu@1.0.7':
+    resolution: {integrity: sha512-OVW6T1x65BTVfWb//xylCoWxbdII+nzHu3L5T035aerBAnZ5e0nmeTMkMEO9qQrVJq4WcWW8hp+T0dF+JvJPUQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-arm64-musl@1.0.7':
+    resolution: {integrity: sha512-KX/k1UO61XdKlXxhtIkq1ZUH8uP+NNK4vSrBcM2/4wWUUCZaG93BU5s0KuE9n+TFn0jEoqLSlXOuH1pYuV5dcQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-riscv64-gnu@1.0.7':
+    resolution: {integrity: sha512-r+0Bg+fK8r2AsrbeT7JwBUAERZSjlyhfAMQfZE/zxYGmbswS92hN0FPjynVWbeuz5fIrLfZ6JA5pH8V6drN6qw==}
+    engines: {node: '>= 10'}
+    cpu: [riscv64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-x64-gnu@1.0.7':
+    resolution: {integrity: sha512-0tT9KzEcTfb6MWdUWIDfy6uq6UNF691r/9NfXxxl8s9+G5QrD7VP1UC+PAwzsCzJTClIKyidNau/grYTL+QmHw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-x64-musl@1.0.7':
+    resolution: {integrity: sha512-rvT0xo1xA+C7e+U/2ngsxWsl9gC5knHU+z8KTT5VK0Zos4AQbWZvtjvegrmzxm4o2yHE32Lexj6CDEJNvuTczA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@napi-rs/canvas-win32-arm64-msvc@1.0.7':
+    resolution: {integrity: sha512-N6s3yoFFPUDkfRpjUiKERVYkli7ex5Sf0Bu/My6D6gOGYxYolC1KvL6x8U0aN+ScCWAzbkIWcMYR9g0OGsFuVw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@napi-rs/canvas-win32-x64-msvc@1.0.7':
+    resolution: {integrity: sha512-SKTNdBV/ljfhkPsLhXjm4x2PQ0ILpc0PhkBzRHuroJXidZUaF5yh0j3s3dIzB8PrRmW+nEASzyMTaWT3nH1ywQ==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@napi-rs/canvas@1.0.7':
+    resolution: {integrity: sha512-26wVFEgs6gbe7wmzCrud1pK8q6oOgcUu7OOF24BuazB8ZUCskU9ZSLrCjoWIFVxx09rjAxsXxPleaWowHvdPCA==}
+    engines: {node: '>= 10'}
 
   '@napi-rs/wasm-runtime@1.1.6':
     resolution: {integrity: sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg==}
@@ -873,6 +1329,11 @@ packages:
     resolution: {integrity: sha512-AnfO3A230Shy6RMO7cya3Wl1OcXnABJrzH8vP+fY7/RFjhzcchB7DjKkkTIAntlwekD+GkSFzEvt2tC+D4Fp8w==}
     engines: {node: '>=22.0.0'}
 
+  '@sveltejs/acorn-typescript@1.0.13':
+    resolution: {integrity: sha512-wgKggnhZVL9Bfx1OaKKTrYY9BFRk6C8UAkQNUcIv1+llzYrIqy+RZm5HPKzn0NpEBvTVhTqB4kQyllZywsRBRQ==}
+    peerDependencies:
+      acorn: ^8.9.0
+
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
@@ -986,6 +1447,9 @@ packages:
 
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
+
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
   '@typescript-eslint/eslint-plugin@8.64.0':
     resolution: {integrity: sha512-CGvQPBxN3wZLu6Rz2kFUpZeoCm78xUic92ck39KPePkO1NPOwjCqdQnm5Q87tpWw9vcBvW8XLrDXjH9PWYtJ3Q==}
@@ -1156,6 +1620,33 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@vue/compiler-core@3.5.41':
+    resolution: {integrity: sha512-q0Xtv/F9w2YO/7htQhtiL+Ev2WCJbe5N2hc+XfgyKkEKqWpSxknmT8QOuGdEKNdjPq0c3F7rNpFkTo3Kfrm7pg==}
+
+  '@vue/compiler-dom@3.5.41':
+    resolution: {integrity: sha512-oKacVfNglLvGjnS6BXOlGL7EyG2h8X03pqXCjzotRZUaXGjbrTJUnVAQjrCqUnS+lyu31nwQjZY/d817GmCnfw==}
+
+  '@vue/compiler-sfc@3.5.41':
+    resolution: {integrity: sha512-XJhip7R2wy6vX3knCxdZN4KracFaZUef58s1KYewqluedHIJaPIVfXoYT7MF1F8nCvv6k8bWWxDC8opMkg1VTQ==}
+
+  '@vue/compiler-ssr@3.5.41':
+    resolution: {integrity: sha512-U3v5OejKEGqOI0Wy0+Sz7hGuIFZHA4LSXzrNM3IMIeDyJEBBfTpX26n3SDgToRpP2bLc9FfI2j/kSgcJ8Emq5A==}
+
+  '@vue/reactivity@3.5.41':
+    resolution: {integrity: sha512-rznsqKM0np0x18EjzF8x88MpEhdNsffbvFbckLL5+oUKz1BxAImEmO7J1ArRYSyo6aQaVoBDp7jEkT91OOxydA==}
+
+  '@vue/runtime-core@3.5.41':
+    resolution: {integrity: sha512-Vcry58hiAKwGen9Z1jUZE0feFsNArPCMOImYI8el48A9Idf6DuQYD0U05zZIF2Iad1hGhPSvcbBbAOhNr55fhg==}
+
+  '@vue/runtime-dom@3.5.41':
+    resolution: {integrity: sha512-3vVBahVBS9+U6cmXBLyb8nE6/yYo4J/CGI9eVFs3KiMc0YHuudwKyShTD65jtJy/L9PUUxNAFu4cj4LiJ0UFbw==}
+
+  '@vue/server-renderer@3.5.41':
+    resolution: {integrity: sha512-n6hx/pNFfbD6SuyeuMVkvqox8bwf/ET9JlA/kAz/imw8sw++wkqKe2mHX5KutjPpbKE4Z56yTHszoOjGMI9igQ==}
+
+  '@vue/shared@3.5.41':
+    resolution: {integrity: sha512-IOnwSCma8j+9xJT6b8H0dEYidC80NsYmNMlZxRsukYcSoGaDBohog5hDxzeUXdFeGWFA++vWvxqOmrr96VlqMA==}
+
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -1179,6 +1670,10 @@ packages:
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
     engines: {node: '>=10'}
+
+  aria-query@5.3.1:
+    resolution: {integrity: sha512-Z/ZeOgVl7bcSYZ/u/rh0fOpvEpq//LZmdbkXyc7syVzjPAhfOa9ebsdTSjEBDU4vs5nC98Kfduj1uFo0qyET3g==}
+    engines: {node: '>= 0.4'}
 
   aria-query@5.3.2:
     resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
@@ -1370,6 +1865,9 @@ packages:
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
 
+  devalue@5.9.0:
+    resolution: {integrity: sha512-RWrqdArjvPbsATEhOPUo6Wndc/iWnkWKlhIrdlF3zMMYo/c3CVtoaVAyLtWxz5h8nSlkHzxnzV2uLydPXmtF+A==}
+
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
@@ -1387,6 +1885,10 @@ packages:
   enhanced-resolve@5.24.2:
     resolution: {integrity: sha512-rpsZEGT1jFuve6QlpyRp9ckQ+kN61hvF9BzCPyMdaKTm8UJce96KBn3sorXOFXlzjPrs3Vc4T1NsSroZ3PxlFw==}
     engines: {node: '>=10.13.0'}
+
+  entities@7.0.1:
+    resolution: {integrity: sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA==}
+    engines: {node: '>=0.12'}
 
   es-abstract-get@1.0.0:
     resolution: {integrity: sha512-6PMWXpdhshVvFp+FoWYs1EvG1Nj0tvk0dZM+XcK0xMEM1czRVcP6ohqPWHy6qPagSpC8j4+p89WXlT+xXJs/fg==}
@@ -1532,6 +2034,9 @@ packages:
       jiti:
         optional: true
 
+  esm-env@1.2.2:
+    resolution: {integrity: sha512-Epxrv+Nr/CaL4ZcFGPJIYLWFom+YeV1DqMLHJoEd9SYRxNbaFruBwfEX/kkHUJf55j2+TUbmDcmuilbP1TmXHA==}
+
   espree@10.4.0:
     resolution: {integrity: sha512-j6PAQ2uUr79PZhBjP5C5fhl8e39FmRnOjsD5lGnWrFU8i2G776tBK7+nP8KuQUTTyAZUwfQqXAgrVH5MbH9CYQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1540,6 +2045,14 @@ packages:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
 
+  esrap@2.3.4:
+    resolution: {integrity: sha512-CHnJXZDfBeOAjLIGNy/0BEsmDu5+irHgUXRW9pGptxCbO3uyjJ98crilzFgiBqizW94UodjX3GAPLg/dhEnUfA==}
+    peerDependencies:
+      '@typescript-eslint/types': ^8.2.0
+    peerDependenciesMeta:
+      '@typescript-eslint/types':
+        optional: true
+
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
     engines: {node: '>=4.0'}
@@ -1547,6 +2060,9 @@ packages:
   estraverse@5.3.0:
     resolution: {integrity: sha512-MMdARuVEQziNTeJD8DgMqmhwR11BRQ/cBP+pLtYdSTnf3MIO8fFeiINEbX36ZdNlfU/7A9f3gUw49B3oQsvwBA==}
     engines: {node: '>=4.0'}
+
+  estree-walker@2.0.2:
+    resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
 
   esutils@2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
@@ -1792,6 +2308,9 @@ packages:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
 
+  is-reference@3.0.3:
+    resolution: {integrity: sha512-ixkJoqQvAP88E6wLydLGGqCJsrFUnqoH6HnaczB8XmDH1oaWU+xxdptvikTgaEhtZ53Ky6YXiBuUI2WXLMCwjw==}
+
   is-regex@1.2.1:
     resolution: {integrity: sha512-MjYsKHO5O7mCsmRGxWcLWheFqN9DJ/2TmngvjKXihe6efViPqc274+Fx/4fYj/r03+ESvBdTXK0V6tA3rgez1g==}
     engines: {node: '>= 0.4'}
@@ -1960,6 +2479,9 @@ packages:
     resolution: {integrity: sha512-NXYBzinNrblfraPGyrbPoD19C1h9lfI/1mzgWYvXUTe414Gz/X1FD2XBZSZM7rRTrMA8JL3OtAaGifrIKhQ5yQ==}
     engines: {node: '>= 12.0.0'}
 
+  locate-character@3.0.0:
+    resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
+
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
@@ -2112,6 +2634,10 @@ packages:
   path-parse@1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
 
+  pdfjs-dist@6.2.108:
+    resolution: {integrity: sha512-YxFb+SQcodN2rnX9Tn3dHYlqfb7NjlzzfONPpJd+AKoKtUjEdevTfbC07d5TcczzOK6261auRkP/M8OBHs9vFQ==}
+    engines: {node: '>=22.13.0 || >=24'}
+
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -2134,6 +2660,14 @@ packages:
   postcss@8.5.19:
     resolution: {integrity: sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==}
     engines: {node: ^10 || ^12 || >=14}
+
+  preact@10.29.8:
+    resolution: {integrity: sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==}
+    peerDependencies:
+      preact-render-to-string: '>=5'
+    peerDependenciesMeta:
+      preact-render-to-string:
+        optional: true
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -2345,6 +2879,10 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  svelte@5.56.9:
+    resolution: {integrity: sha512-VT8kSnlEg8069w7AiCcAk3Yf5xvMnrGTagVOmU/OpOLHaHnNqXhWZCH/4EVga/bT/HtWhvE6/fHrXLErx7OnJA==}
+    engines: {node: '>=18'}
+
   tailwind-merge@3.6.0:
     resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
 
@@ -2449,6 +2987,14 @@ packages:
       '@types/react':
         optional: true
 
+  vue@3.5.41:
+    resolution: {integrity: sha512-2laE0p+aK+/AOPG/XL/WepOs/GlK755LJ1XECi9kDUrz1FKNw8rb2Xzlw9JS1rqEV55nb0ttsKxVlTCcd+R5cg==}
+    peerDependencies:
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   which-boxed-primitive@1.1.1:
     resolution: {integrity: sha512-TbX3mj8n0odCBFVlY8AxkqcHASw3L60jIuF8jFP78az3C2YhmGvqbHBpAjTRH2/xqYunrJ9g1jSyjCjpoWzIAA==}
     engines: {node: '>= 0.4'}
@@ -2480,6 +3026,9 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  zimmerframe@1.1.4:
+    resolution: {integrity: sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ==}
 
   zod-validation-error@4.0.2:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
@@ -2571,6 +3120,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.7
 
+  '@babel/parser@7.29.8':
+    dependencies:
+      '@babel/types': 7.29.8
+
   '@babel/template@7.29.7':
     dependencies:
       '@babel/code-frame': 7.29.7
@@ -2593,6 +3146,429 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@babel/types@7.29.8':
+    dependencies:
+      '@babel/helper-string-parser': 7.29.7
+      '@babel/helper-validator-identifier': 7.29.7
+
+  '@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/engines': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/engines@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/fonts-arabic': 1.0.0
+      '@embedpdf/fonts-hebrew': 1.0.0
+      '@embedpdf/fonts-jp': 1.0.0
+      '@embedpdf/fonts-kr': 1.0.0
+      '@embedpdf/fonts-latin': 1.0.0
+      '@embedpdf/fonts-sc': 1.0.0
+      '@embedpdf/fonts-tc': 1.0.0
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/pdfium': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/fonts-arabic@1.0.0': {}
+
+  '@embedpdf/fonts-hebrew@1.0.0': {}
+
+  '@embedpdf/fonts-jp@1.0.0': {}
+
+  '@embedpdf/fonts-kr@1.0.0': {}
+
+  '@embedpdf/fonts-latin@1.0.0': {}
+
+  '@embedpdf/fonts-sc@1.0.0': {}
+
+  '@embedpdf/fonts-tc@1.0.0': {}
+
+  '@embedpdf/models@2.15.0': {}
+
+  '@embedpdf/pdfium@2.15.0': {}
+
+  '@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae)':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-history': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-interaction-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-scroll': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-selection': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/utils': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-attachment@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-bookmark@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-capture@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-render@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-render': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-commands@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-document-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-export@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-form@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae))(@embedpdf/plugin-history@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae)
+      '@embedpdf/plugin-history': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/utils': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-fullscreen@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-history@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-i18n@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-pan@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-viewport': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-print@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-redaction@2.15.0(5152e5fee5a1080f6f8f959d5748a789)':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae)
+      '@embedpdf/plugin-history': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-interaction-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-selection': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/utils': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-render@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-rotate@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-scroll@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-viewport': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-search@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-selection@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-interaction-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/utils': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-signature@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae)
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-spread@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-stamp@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae))(@embedpdf/plugin-i18n@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae)
+      '@embedpdf/plugin-i18n': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-thumbnail@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-render@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-tiling@2.15.0(467356b7054b82d49b4bd85291c661e6)':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-scroll': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-viewport': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-ui@2.15.0(467356b7054b82d49b4bd85291c661e6)':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-render': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-scroll': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-viewport': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/plugin-zoom@2.15.0(c661392acc5d30ba87a049aad36fbe62)':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/plugin-scroll': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-viewport': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
+
+  '@embedpdf/react-pdf-viewer@2.15.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/snippet': 2.15.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+    transitivePeerDependencies:
+      - preact-render-to-string
+      - svelte
+      - vue
+
+  '@embedpdf/snippet@2.15.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      '@embedpdf/core': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/engines': 2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/models': 2.15.0
+      '@embedpdf/pdfium': 2.15.0
+      '@embedpdf/plugin-annotation': 2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae)
+      '@embedpdf/plugin-attachment': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-bookmark': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-capture': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-render@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-commands': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-document-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-export': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-form': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae))(@embedpdf/plugin-history@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-fullscreen': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-history': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-i18n': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-interaction-manager': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-pan': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-print': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-redaction': 2.15.0(5152e5fee5a1080f6f8f959d5748a789)
+      '@embedpdf/plugin-render': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-rotate': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-scroll': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-viewport@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-search': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-selection': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-interaction-manager@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-signature': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-spread': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-stamp': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-annotation@2.15.0(ecbe58c05ea5aead4b2e4fbbc28a19ae))(@embedpdf/plugin-i18n@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-thumbnail': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(@embedpdf/plugin-render@2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-tiling': 2.15.0(467356b7054b82d49b4bd85291c661e6)
+      '@embedpdf/plugin-ui': 2.15.0(467356b7054b82d49b4bd85291c661e6)
+      '@embedpdf/plugin-viewport': 2.15.0(@embedpdf/core@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3)))(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))
+      '@embedpdf/plugin-zoom': 2.15.0(c661392acc5d30ba87a049aad36fbe62)
+      preact: 10.29.8
+      tailwind-merge: 3.6.0
+    transitivePeerDependencies:
+      - preact-render-to-string
+      - react
+      - react-dom
+      - svelte
+      - vue
+
+  '@embedpdf/utils@2.15.0(preact@10.29.8)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(svelte@5.56.9(@typescript-eslint/types@8.64.0))(vue@3.5.41(typescript@5.9.3))':
+    dependencies:
+      preact: 10.29.8
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      svelte: 5.56.9(@typescript-eslint/types@8.64.0)
+      vue: 3.5.41(typescript@5.9.3)
 
   '@emnapi/core@1.10.0':
     dependencies:
@@ -2809,6 +3785,54 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@napi-rs/canvas-android-arm64@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-darwin-arm64@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-darwin-x64@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-linux-arm-gnueabihf@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-linux-arm64-gnu@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-linux-arm64-musl@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-linux-riscv64-gnu@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-linux-x64-gnu@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-linux-x64-musl@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-win32-arm64-msvc@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas-win32-x64-msvc@1.0.7':
+    optional: true
+
+  '@napi-rs/canvas@1.0.7':
+    optionalDependencies:
+      '@napi-rs/canvas-android-arm64': 1.0.7
+      '@napi-rs/canvas-darwin-arm64': 1.0.7
+      '@napi-rs/canvas-darwin-x64': 1.0.7
+      '@napi-rs/canvas-linux-arm-gnueabihf': 1.0.7
+      '@napi-rs/canvas-linux-arm64-gnu': 1.0.7
+      '@napi-rs/canvas-linux-arm64-musl': 1.0.7
+      '@napi-rs/canvas-linux-riscv64-gnu': 1.0.7
+      '@napi-rs/canvas-linux-x64-gnu': 1.0.7
+      '@napi-rs/canvas-linux-x64-musl': 1.0.7
+      '@napi-rs/canvas-win32-arm64-msvc': 1.0.7
+      '@napi-rs/canvas-win32-x64-msvc': 1.0.7
+    optional: true
 
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
@@ -3238,6 +4262,10 @@ snapshots:
       '@supabase/realtime-js': 2.110.7
       '@supabase/storage-js': 2.110.7
 
+  '@sveltejs/acorn-typescript@1.0.13(acorn@8.17.0)':
+    dependencies:
+      acorn: 8.17.0
+
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
@@ -3333,6 +4361,8 @@ snapshots:
   '@types/react@19.2.17':
     dependencies:
       csstype: 3.2.3
+
+  '@types/trusted-types@2.0.7': {}
 
   '@typescript-eslint/eslint-plugin@8.64.0(@typescript-eslint/parser@8.64.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
@@ -3495,6 +4525,60 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
+  '@vue/compiler-core@3.5.41':
+    dependencies:
+      '@babel/parser': 7.29.8
+      '@vue/shared': 3.5.41
+      entities: 7.0.1
+      estree-walker: 2.0.2
+      source-map-js: 1.2.1
+
+  '@vue/compiler-dom@3.5.41':
+    dependencies:
+      '@vue/compiler-core': 3.5.41
+      '@vue/shared': 3.5.41
+
+  '@vue/compiler-sfc@3.5.41':
+    dependencies:
+      '@babel/parser': 7.29.8
+      '@vue/compiler-core': 3.5.41
+      '@vue/compiler-dom': 3.5.41
+      '@vue/compiler-ssr': 3.5.41
+      '@vue/shared': 3.5.41
+      estree-walker: 2.0.2
+      magic-string: 0.30.21
+      postcss: 8.5.19
+      source-map-js: 1.2.1
+
+  '@vue/compiler-ssr@3.5.41':
+    dependencies:
+      '@vue/compiler-dom': 3.5.41
+      '@vue/shared': 3.5.41
+
+  '@vue/reactivity@3.5.41':
+    dependencies:
+      '@vue/shared': 3.5.41
+
+  '@vue/runtime-core@3.5.41':
+    dependencies:
+      '@vue/reactivity': 3.5.41
+      '@vue/shared': 3.5.41
+
+  '@vue/runtime-dom@3.5.41':
+    dependencies:
+      '@vue/reactivity': 3.5.41
+      '@vue/runtime-core': 3.5.41
+      '@vue/shared': 3.5.41
+      csstype: 3.2.3
+
+  '@vue/server-renderer@3.5.41':
+    dependencies:
+      '@vue/compiler-ssr': 3.5.41
+      '@vue/runtime-dom': 3.5.41
+      '@vue/shared': 3.5.41
+
+  '@vue/shared@3.5.41': {}
+
   acorn-jsx@5.3.2(acorn@8.17.0):
     dependencies:
       acorn: 8.17.0
@@ -3517,6 +4601,8 @@ snapshots:
   aria-hidden@1.2.6:
     dependencies:
       tslib: 2.8.1
+
+  aria-query@5.3.1: {}
 
   aria-query@5.3.2: {}
 
@@ -3726,6 +4812,8 @@ snapshots:
 
   detect-node-es@1.1.0: {}
 
+  devalue@5.9.0: {}
+
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
@@ -3744,6 +4832,8 @@ snapshots:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.3.3
+
+  entities@7.0.1: {}
 
   es-abstract-get@1.0.0:
     dependencies:
@@ -4047,6 +5137,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  esm-env@1.2.2: {}
+
   espree@10.4.0:
     dependencies:
       acorn: 8.17.0
@@ -4057,11 +5149,19 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
+  esrap@2.3.4(@typescript-eslint/types@8.64.0):
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.5
+    optionalDependencies:
+      '@typescript-eslint/types': 8.64.0
+
   esrecurse@4.3.0:
     dependencies:
       estraverse: 5.3.0
 
   estraverse@5.3.0: {}
+
+  estree-walker@2.0.2: {}
 
   esutils@2.0.3: {}
 
@@ -4306,6 +5406,10 @@ snapshots:
 
   is-number@7.0.0: {}
 
+  is-reference@3.0.3:
+    dependencies:
+      '@types/estree': 1.0.9
+
   is-regex@1.2.1:
     dependencies:
       call-bound: 1.0.4
@@ -4450,6 +5554,8 @@ snapshots:
       lightningcss-linux-x64-musl: 1.32.0
       lightningcss-win32-arm64-msvc: 1.32.0
       lightningcss-win32-x64-msvc: 1.32.0
+
+  locate-character@3.0.0: {}
 
   locate-path@6.0.0:
     dependencies:
@@ -4608,6 +5714,10 @@ snapshots:
 
   path-parse@1.0.7: {}
 
+  pdfjs-dist@6.2.108:
+    optionalDependencies:
+      '@napi-rs/canvas': 1.0.7
+
   picocolors@1.1.1: {}
 
   picomatch@2.3.2: {}
@@ -4627,6 +5737,8 @@ snapshots:
       nanoid: 3.3.16
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  preact@10.29.8: {}
 
   prelude-ls@1.2.1: {}
 
@@ -4905,6 +6017,27 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
+  svelte@5.56.9(@typescript-eslint/types@8.64.0):
+    dependencies:
+      '@jridgewell/remapping': 2.3.5
+      '@jridgewell/sourcemap-codec': 1.5.5
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.17.0)
+      '@types/estree': 1.0.9
+      '@types/trusted-types': 2.0.7
+      acorn: 8.17.0
+      aria-query: 5.3.1
+      axobject-query: 4.1.0
+      clsx: 2.1.1
+      devalue: 5.9.0
+      esm-env: 1.2.2
+      esrap: 2.3.4(@typescript-eslint/types@8.64.0)
+      is-reference: 3.0.3
+      locate-character: 3.0.0
+      magic-string: 0.30.21
+      zimmerframe: 1.1.4
+    transitivePeerDependencies:
+      - '@typescript-eslint/types'
+
   tailwind-merge@3.6.0: {}
 
   tailwindcss@4.3.3: {}
@@ -5046,6 +6179,16 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
 
+  vue@3.5.41(typescript@5.9.3):
+    dependencies:
+      '@vue/compiler-dom': 3.5.41
+      '@vue/compiler-sfc': 3.5.41
+      '@vue/runtime-dom': 3.5.41
+      '@vue/server-renderer': 3.5.41
+      '@vue/shared': 3.5.41
+    optionalDependencies:
+      typescript: 5.9.3
+
   which-boxed-primitive@1.1.1:
     dependencies:
       is-bigint: 1.1.0
@@ -5096,6 +6239,8 @@ snapshots:
   yallist@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  zimmerframe@1.1.4: {}
 
   zod-validation-error@4.0.2(zod@4.4.3):
     dependencies:

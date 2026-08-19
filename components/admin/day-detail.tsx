@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -16,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetUploadButton } from "@/components/admin/asset-upload-button";
 import { VideoPartsManager } from "@/components/admin/video-parts-manager";
 import { TaskBuilder } from "@/components/admin/task-builder";
+import { PdfViewerModal } from "@/components/ui/pdf-viewer-modal";
 import type { TaskQuestion } from "@/types/task";
 import {
   TEACHING_DAYS_PER_WEEK,
@@ -53,10 +55,12 @@ export function DayDetail({
   notesDownloadUrl: string | null;
   initialTab: DayDetailTab;
 }) {
+  const [viewerOpen, setViewerOpen] = React.useState(false);
+
   return (
     <div className="mx-auto max-w-4xl">
       <Link
-        href={`/admin/content-management/${course.slug}`}
+        href={`/admin/content-management/${course.slug}?week=${week.weekNumber}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-body transition-colors hover:text-ink"
       >
         <ArrowLeft className="size-4" />
@@ -84,7 +88,7 @@ export function DayDetail({
           {/* Material — one tab per kind so authoring stays focused. */}
           <Tabs defaultValue={initialTab}>
             <TabsList className="w-full">
-              <TabTrigger value="videos" icon={Video} label="Videos" status={day.video.status} />
+              <TabTrigger value="videos" icon={Video} label="Classes" status={day.video.status} />
               <TabTrigger value="notes" icon={FileText} label="Notes" status={day.notes.status} />
               <TabTrigger value="task" icon={ClipboardList} label="Task" status={day.task.status} />
             </TabsList>
@@ -124,16 +128,24 @@ export function DayDetail({
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {notesViewUrl ? (
-                    <Button variant="secondary" size="sm" asChild>
-                      <a
-                        href={notesViewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setViewerOpen(true)}
                       >
                         <Eye />
                         View
-                      </a>
-                    </Button>
+                      </Button>
+                      <PdfViewerModal
+                        isOpen={viewerOpen}
+                        onClose={() => setViewerOpen(false)}
+                        title={day.notes.title}
+                        viewUrl={notesViewUrl}
+                        downloadUrl={notesDownloadUrl}
+                        fileName={day.notes.fileName ?? "notes.pdf"}
+                      />
+                    </>
                   ) : null}
                   {notesDownloadUrl ? (
                     <Button variant="ghost" size="sm" asChild>
@@ -180,12 +192,15 @@ function TabTrigger({
 }) {
   const dot =
     status === "published"
-      ? "bg-positive"
+      ? "bg-emerald-500"
       : status === "draft"
         ? "bg-warning"
         : "bg-border";
   return (
-    <TabsTrigger value={value} className="flex-1 justify-center">
+    <TabsTrigger
+      value={value}
+      className="flex-1 justify-center gap-1.5 data-[state=active]:bg-[#043556] data-[state=active]:text-white"
+    >
       <Icon className="size-4" />
       {label}
       <span className={`size-1.5 rounded-full ${dot}`} aria-hidden />

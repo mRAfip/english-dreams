@@ -82,8 +82,10 @@ export function ReviewQueue({ items }: { items: ReviewQueueItem[] }) {
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-ink">{item.studentName}</div>
                     <div className="truncate text-xs text-mute">
-                      Day {item.dayNumber} · {item.taskTitle} · {item.answerCount}{" "}
-                      {item.answerCount === 1 ? "answer" : "answers"}
+                      Day {item.dayNumber} · {item.taskTitle}
+                      {item.totalQuestions
+                        ? ` · ${item.answeredQuestions ?? item.answerCount} of ${item.totalQuestions} answered`
+                        : ` · ${item.answerCount} ${item.answerCount === 1 ? "answer" : "answers"}`}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">

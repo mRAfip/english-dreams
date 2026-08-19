@@ -101,10 +101,16 @@ export type StudentQuiz = {
   state: QuizState;
   /** Percentage. Null unless the paper was sat. */
   score: number | null;
+  correctCount: number | null;
+  total: number | null;
 };
 
 /** A student's stored result for a quiz, keyed by content_quizzes id. */
-export type QuizAttempt = { score: number };
+export type QuizAttempt = {
+  score: number;
+  correctCount?: number;
+  total?: number;
+};
 
 export type StudentWeek = {
   weekNumber: number;
@@ -163,18 +169,24 @@ function buildTask(
 function mapStudentQuiz(
   quiz: WeekendQuiz,
   weekNumber: number,
-  currentWeek: number,
+  isWeekUnlocked: boolean,
   attempt: QuizAttempt | undefined,
+  day5Completed: boolean,
+  satCompleted: boolean,
+  isPastWeek: boolean,
 ): StudentQuiz {
   const available = quiz.status === "published" && quiz.quizId !== null;
-  const reached = weekNumber <= currentWeek;
 
   let state: QuizState;
-  if (!available || !reached) {
+  if (!available || !isWeekUnlocked) {
+    state = "locked";
+  } else if (quiz.day === "saturday" && !day5Completed) {
+    state = "locked";
+  } else if (quiz.day === "sunday" && (!day5Completed || !satCompleted)) {
     state = "locked";
   } else if (attempt) {
     state = "done";
-  } else if (weekNumber < currentWeek) {
+  } else if (isPastWeek) {
     state = "missed";
   } else {
     state = "open";
@@ -191,6 +203,8 @@ function mapStudentQuiz(
     questionCount: quiz.questionCount,
     state,
     score: attempt?.score ?? null,
+    correctCount: attempt?.correctCount ?? null,
+    total: attempt?.total ?? null,
   };
 }
 
@@ -276,14 +290,6 @@ function calculateProgressStreak(progressByDay: Map<number, DayProgress>): numbe
   return streak;
 }
 
-/**
- * Build a student's journey from their course's curriculum (the admin-authored
- * content tables). The course's shape — weeks, days, video/notes/task — is live
- * data; access is gated on publish status (unpublished days read as locked).
- *
- * Pass `course: null` with an empty curriculum for an unassigned student: every
- * count comes out zero and the screens show the "no course yet" state.
- */
 export function buildJourney(
   course: Course | null,
   curriculum: CurriculumWeek[],
@@ -302,26 +308,50 @@ export function buildJourney(
       videoWatchedParts: [],
     };
 
-  // Progression is sequential and completion-driven — it reads from the
-  // student's own record (student_day_progress), NOT from how much content has
-  // been published. A day is "done" only once the student has completed it; the
-  // next day opens only then. Days past the one they're on stay locked, even if
-  // their content is already published. Publishing is necessary to unlock a day,
-  // but never sufficient on its own.
   const sortedDays = [...allDaysFlat].sort((a, b) => a.dayNumber - b.dayNumber);
   const isDone = (dayNumber: number): boolean =>
     progressFor(dayNumber).taskCompleted;
   const daysCompleted = sortedDays.filter((d) => isDone(d.dayNumber)).length;
 
-  // The frontier: the first day, in order, the student hasn't completed.
-  const frontier = sortedDays.find((d) => !isDone(d.dayNumber)) ?? null;
-  // The day they can work on right now: the frontier, but only if its content
-  // is released. If the next day isn't published yet, there is no open day —
-  // the student is caught up and waiting for the next class.
+  // Determine which weeks are fully completed and which are unlocked
+  // Week W is unlocked if Week W-1 is fully completed (5 teaching days + quizzes done)
+  const unlockedWeekNumbers = new Set<number>();
+
+  for (let i = 0; i < curriculum.length; i++) {
+    const w = curriculum[i];
+    const weekNum = w.weekNumber;
+
+    if (i === 0) {
+      // Week 1 is always unlocked
+      unlockedWeekNumbers.add(weekNum);
+    } else {
+      const prevWeek = curriculum[i - 1];
+      const prevWeekDaysDone =
+        prevWeek.days.length === 0 ||
+        prevWeek.days.every((d) => isDone(d.dayNumber));
+
+      const satQ = prevWeek.quizzes.find((q) => q.day === "saturday");
+      const sunQ = prevWeek.quizzes.find((q) => q.day === "sunday");
+
+      const satDone = !satQ || !satQ.quizId || satQ.status !== "published" || attemptsByQuiz.has(satQ.quizId);
+      const sunDone = !sunQ || !sunQ.quizId || sunQ.status !== "published" || attemptsByQuiz.has(sunQ.quizId);
+
+      const prevWeekFullyDone = prevWeekDaysDone && satDone && sunDone;
+
+      if (unlockedWeekNumbers.has(prevWeek.weekNumber) && prevWeekFullyDone) {
+        unlockedWeekNumbers.add(weekNum);
+      }
+    }
+  }
+
+  // Active day: first uncompleted day in the unlocked weeks
+  const frontier =
+    sortedDays.find(
+      (d) => !isDone(d.dayNumber) && unlockedWeekNumbers.has(weekNumberForDay(d.dayNumber)),
+    ) ?? null;
   const activeDay = frontier && isReleased(frontier) ? frontier.dayNumber : 0;
   const anyReleased = sortedDays.some(isReleased);
-  // What "Day X of Y" points at: the open day; else the day being waited on;
-  // else the last day once the whole programme is done; else 0 (nothing yet).
+
   const currentDay = activeDay
     ? activeDay
     : frontier
@@ -329,16 +359,48 @@ export function buildJourney(
         ? frontier.dayNumber
         : 0
       : totalDays;
-  const currentWeek = Math.min(
-    Math.max(1, currentDay ? weekNumberForDay(currentDay) : 1),
-    Math.max(1, totalWeeks),
-  );
+
+  // Determine current active week (the lowest unlocked week that is not fully completed)
+  let currentWeek = 1;
+  for (const w of curriculum) {
+    if (unlockedWeekNumbers.has(w.weekNumber)) {
+      currentWeek = w.weekNumber;
+      const daysDone =
+        w.days.length === 0 || w.days.every((d) => isDone(d.dayNumber));
+      const satQ = w.quizzes.find((q) => q.day === "saturday");
+      const sunQ = w.quizzes.find((q) => q.day === "sunday");
+      const satDone = !satQ || !satQ.quizId || satQ.status !== "published" || attemptsByQuiz.has(satQ.quizId);
+      const sunDone = !sunQ || !sunQ.quizId || sunQ.status !== "published" || attemptsByQuiz.has(sunQ.quizId);
+      if (!daysDone || !satDone || !sunDone) {
+        break;
+      }
+    }
+  }
+  currentWeek = Math.min(Math.max(1, currentWeek), Math.max(1, totalWeeks));
 
   const weeks: StudentWeek[] = curriculum.map((week) => {
+    const isWeekUnlocked = unlockedWeekNumbers.has(week.weekNumber);
+    const day5Completed =
+      week.days.length === 0 || week.days.every((d) => isDone(d.dayNumber));
+
+    const satQuiz = week.quizzes.find((q) => q.day === "saturday");
+    const satCompleted = Boolean(
+      satQuiz && satQuiz.quizId && attemptsByQuiz.has(satQuiz.quizId),
+    );
+
+    const sunQuiz = week.quizzes.find((q) => q.day === "sunday");
+    const sunCompleted = Boolean(
+      sunQuiz && sunQuiz.quizId && attemptsByQuiz.has(sunQuiz.quizId),
+    );
+
+    const weekFullyDone = day5Completed &&
+      (!satQuiz || !satQuiz.quizId || satQuiz.status !== "published" || satCompleted) &&
+      (!sunQuiz || !sunQuiz.quizId || sunQuiz.status !== "published" || sunCompleted);
+
     const days = week.days.map<StudentDay>((day) => {
       const state: DayState = isDone(day.dayNumber)
         ? "done"
-        : day.dayNumber === activeDay
+        : isWeekUnlocked && day.dayNumber === activeDay
           ? "today"
           : "locked";
       const progress = progressFor(day.dayNumber);
@@ -361,7 +423,6 @@ export function buildJourney(
         title: day.title,
         video: {
           title: day.video.title,
-          // Real duration from the upload probe; fall back so the row still reads.
           durationMin: day.video.durationMin ?? 18 + ((day.dayNumber * 7) % 25),
           watched: progress.videoWatched,
         },
@@ -380,6 +441,8 @@ export function buildJourney(
       };
     });
 
+    const isPastWeek = week.weekNumber < currentWeek;
+
     return {
       weekNumber: week.weekNumber,
       title: week.title,
@@ -389,16 +452,18 @@ export function buildJourney(
         mapStudentQuiz(
           q,
           week.weekNumber,
-          currentWeek,
+          isWeekUnlocked,
           q.quizId ? attemptsByQuiz.get(q.quizId) : undefined,
+          day5Completed,
+          satCompleted,
+          isPastWeek,
         ),
       ),
-      state:
-        week.weekNumber < currentWeek
-          ? "done"
-          : week.weekNumber === currentWeek
-            ? "current"
-            : "locked",
+      state: weekFullyDone
+        ? "done"
+        : week.weekNumber === currentWeek
+          ? "current"
+          : "locked",
     };
   });
 

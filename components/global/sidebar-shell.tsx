@@ -54,6 +54,8 @@ export function SidebarShell({
   const groups = NAV_BY_ROLE[user.role];
   const active = activeNavItem(user.role, pathname);
 
+  const isStudentHome = pathname === "/student";
+
   // While the drawer is open, freeze the body behind it.
   useEffect(() => {
     if (!drawerOpen) return;
@@ -76,7 +78,12 @@ export function SidebarShell({
     // Pinned to the viewport (out of flow) so the app never window-scrolls,
     // regardless of how tall the content grows — only the content <main>
     // scrolls. Each column carries min-h-0 so the internal scroll resolves.
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-gradient-to-b from-[#043556]/25 via-[#043556]/5 to-[#f8fafc]">
+    <div className={cn(
+      "fixed inset-0 flex flex-col overflow-hidden",
+      isStudentHome
+        ? "bg-gradient-to-b from-[#043556]/25 via-[#043556]/5 to-[#f8fafc] student-home-bg-mobile"
+        : "bg-white"
+    )}>
 
       {/* Brand hairline across the top of the whole app. */}
       <div className="hidden md:block h-1 shrink-0 bg-primary" />

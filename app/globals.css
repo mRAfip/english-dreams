@@ -12,7 +12,7 @@
   --foreground: #0b1320;
 
   /* Glassmorphic surfaces */
-  --card: rgba(255, 255, 255, 0.75);
+  --card: rgb(255, 255, 255);
   --card-foreground: #0b1320;
   --popover: #ffffff;
   --popover-foreground: #0b1320;
@@ -108,12 +108,63 @@
    Base Reset & Premium Backgrounds
    ───────────────────────────────────────────────────────────── */
 body {
-  background: radial-gradient(circle at 10% 20%, #fcfdfe 0%, #f4f7fa 90%);
+  background: #fff;
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
+
+/* Student main home page mobile view background: linear gradient from dark to light */
+@media (max-width: 767px) {
+  .student-home-bg-mobile {
+    background: linear-gradient(to bottom, #043556 0%, #f8fafc 50%, #f8fafc 100%) !important;
+  }
+
+  /* Contrast adjustments for the header elements on dark top background */
+  .student-home-bg-mobile header button,
+  .student-home-bg-mobile header a,
+  .student-home-bg-mobile header svg {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .student-home-bg-mobile header button.nav-glass-btn {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .student-home-bg-mobile header button.nav-glass-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+  }
+
+  .student-home-bg-mobile header button.nav-glass-btn:disabled {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    opacity: 0.4 !important;
+  }
+
+  .student-home-bg-mobile header button.nav-glass-btn:disabled svg {
+    color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Invert logo colors to display white on dark background */
+  .student-home-bg-mobile header img {
+    filter: brightness(0) invert(1) !important;
+  }
+
+  /* Adjust page heading (greeting & username) text color for contrast */
+  .student-home-bg-mobile header h1 {
+    color: #ffffff !important;
+  }
+
+  .student-home-bg-mobile header div.flex-col span {
+    color: rgba(255, 255, 255, 0.65) !important;
+  }
+}
+
 
 
 .font-display {

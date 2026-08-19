@@ -86,7 +86,7 @@ export function getDocumentViewUrl(key: string, fileName?: string | null): strin
   const extension = (fileName ?? basename(key)).split(".").pop()?.toLowerCase();
 
   if (["doc", "docx", "ppt", "pptx", "xls", "xlsx"].includes(extension ?? "")) {
-    return `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(inlineUrl)}`;
+    return `https://docs.google.com/gview?url=${encodeURIComponent(inlineUrl)}&embedded=true`;
   }
 
   return inlineUrl;

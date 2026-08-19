@@ -101,13 +101,31 @@ function probeDurationMin(file: File): Promise<number | null> {
 export function ContentManager({
   course,
   weeks,
+  initialWeek = 1,
 }: {
   course: Course;
   weeks: CurriculumWeek[];
+  initialWeek?: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
-  const [selected, setSelected] = React.useState(1);
+  const [prevInitialWeek, setPrevInitialWeek] = React.useState(initialWeek);
+  const [selected, setSelected] = React.useState(initialWeek);
+
+  // Sync selected week to prop initialWeek (for browser back/forward and external nav)
+  if (initialWeek !== prevInitialWeek) {
+    setPrevInitialWeek(initialWeek);
+    setSelected(initialWeek);
+  }
+
+  // Sync selected week to URL query parameter
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("week") !== selected.toString()) {
+      params.set("week", selected.toString());
+      window.history.replaceState(null, "", `?${params.toString()}`);
+    }
+  }, [selected]);
 
   // --- staged (unsaved) edits for the selected week ---
   const [weekEdit, setWeekEdit] = React.useState<{
